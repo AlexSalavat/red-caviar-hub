@@ -1,5 +1,36 @@
 [
-  {"id":"l1","supplierId":"sup1","title":"Кета ГОСТ Р 52336-2005","fishSpecies":"Chum","grade":"GOST","gost":"52336-2005","packaging":["1kg","3kg"],"batchVolumeKg":1000,"pricePerKgRUB":3800,"region":"Sakhalin","terms":["FOB","Delivery"],"photos":["https://placehold.co/600x400?text=Roe1","https://placehold.co/600x400?text=Roe2","https://placehold.co/600x400?text=Roe3"],"shelfLifeDays":180,"tempRegime":"-2..+2°C","status":"approved","badges":["new_batch"],"createdAt":"2025-09-01T10:00:00Z"},
-  {"id":"l2","supplierId":"sup2","title":"Горбуша сорт 1","fishSpecies":"Pink","grade":"1","packaging":["0.5kg","1kg"],"batchVolumeKg":500,"pricePerKgRUB":3200,"region":"Kamchatka","terms":["EXW"],"photos":["https://placehold.co/600x400?text=Roe4","https://placehold.co/600x400?text=Roe5","https://placehold.co/600x400?text=Roe6"],"shelfLifeDays":120,"tempRegime":"-2..+2°C","status":"approved","badges":[],"createdAt":"2025-09-02T11:00:00Z"},
-  {"id":"l3","supplierId":"sup3","title":"Нерка премиум","fishSpecies":"Sockeye","grade":"Premium","packaging":["1kg","10kg"],"batchVolumeKg":300,"pricePerKgRUB":5200,"region":"Magadan","terms":["FOB"],"photos":["https://placehold.co/600x400?text=Roe7","https://placehold.co/600x400?text=Roe8","https://placehold.co/600x400?text=Roe9"],"shelfLifeDays":150,"tempRegime":"-2..+2°C","status":"approved","badges":["top"],"createdAt":"2025-09-03T09:30:00Z"}
+  {
+    "id": "rk1",
+    "supplierId": "sup1",
+    "title": "Красная икра Горбуша — «Немтик»",
+    "__category": "Красная икра",
+    "packaging": ["1kg"],
+    "batchVolumeKg": 25,
+    "pricePerKgRUB": 6200,
+    "region": "Москва",
+    "terms": ["Доставка по Москве", "Самовывоз"],
+    "photos": ["https://placehold.co/800x600?text=Nemtyk+Gorbusha+Roe"],
+    "shelfLifeDays": 180,
+    "tempRegime": "-2..+2°C",
+    "status": "approved",
+    "badges": ["new"],
+    "createdAt": "2025-09-11T12:00:00Z"
+  },
+  {
+    "id": "rk2",
+    "supplierId": "sup1",
+    "title": "Красная икра Кета — «Тымлат»",
+    "__category": "Красная икра",
+    "packaging": ["12.5kg"],
+    "batchVolumeKg": 12.5,
+    "pricePerKgRUB": 7200,
+    "region": "Москва",
+    "terms": ["Доставка по Москве", "Самовывоз"],
+    "photos": ["https://placehold.co/800x600?text=Tymlat+Keta+Roe"],
+    "shelfLifeDays": 180,
+    "tempRegime": "-2..+2°C",
+    "status": "approved",
+    "badges": ["new"],
+    "createdAt": "2025-09-12T10:30:00Z"
+  }
 ]

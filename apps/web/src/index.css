@@ -2,10 +2,132 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { color-scheme: light; }
+/* ───────────────── TOKENS / BASE ───────────────── */
+:root{
+  /* Палитра */
+  --brand: #B5121B;
+  --brand-600: #8f0e15;
+  --verify: #19A974;
 
-/* Глобальный фон: графитово-синий */
-body {
-  background: #0F172A; /* brand.slate */
-  color: #0F172A;      /* базовый текст — тёмный; на страницах задаём свой цвет */
+  /* Нейтральные */
+  --bg: #f7f7f8;           /* фон приложения */
+  --surface: #ffffff;      /* карточки/листы */
+  --text: #0F172A;         /* заголовки */
+  --muted: #475569;        /* подписи/вторичный текст */
+
+  /* Радиусы/тени */
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+
+  --shadow-1: 0 6px 18px rgba(15, 23, 42, 0.06);
+  --shadow-2: 0 10px 30px rgba(15, 23, 42, 0.10);
+}
+
+@layer base{
+  html,body,#root{ height:100%; }
+  html{ scroll-behavior:smooth; }
+  body{
+    @apply text-[15px] leading-6;
+    background: radial-gradient(1200px 600px at 50% -200px, #fff 0%, var(--bg) 60%) no-repeat,
+                var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Выделение */
+  ::selection{ background: color-mix(in oklab, var(--brand) 20%, white); color: var(--text); }
+
+  /* Скроллбар (тонкий, светлый) */
+  *::-webkit-scrollbar{ height:10px; width:10px; }
+  *::-webkit-scrollbar-track{ background: transparent; }
+  *::-webkit-scrollbar-thumb{
+    background: rgba(0,0,0,.08);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  *:hover::-webkit-scrollbar-thumb{ background: rgba(0,0,0,.12); }
+
+  /* Фокус только по клавиатуре */
+  :focus:not(:focus-visible){ outline: none; }
+  :focus-visible{
+    outline: 2px solid color-mix(in oklab, var(--brand) 55%, white);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  /* Типографика по умолчанию */
+  h1,h2,h3{ @apply text-slate-900 font-semibold tracking-tight; }
+  h1{ @apply text-2xl leading-8; }
+  h2{ @apply text-xl leading-7; }
+  h3{ @apply text-lg leading-7; }
+  p,small{ color: var(--muted); }
+}
+
+/* ───────────────── COMPONENT UTILITIES ───────────────── */
+@layer components{
+  /* Контейнер страницы */
+  .container-safe{ @apply max-w-7xl mx-auto px-3 md:px-6; }
+
+  /* Карточки */
+  .ui-card{
+    background: var(--surface);
+    border: 1px solid rgba(15,23,42,.08);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-1);
+  }
+  .ui-card:hover{ box-shadow: var(--shadow-2); }
+
+  /* Стекло-карточка */
+  .ui-card-glass{
+    @apply backdrop-blur-xl;
+    background: color-mix(in oklab, white 70%, transparent);
+    border: 1px solid rgba(255,255,255,.6);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-1);
+  }
+
+  /* Кнопки */
+  .btn{ @apply inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition active:translate-y-px; }
+  .btn-primary{
+    background: linear-gradient(90deg, var(--brand) 0%, var(--brand-600) 100%);
+    color: #fff;
+    box-shadow: 0 6px 16px rgba(181,18,27,.25);
+  }
+  .btn-primary:hover{ filter: brightness(.98); }
+  .btn-secondary{ @apply border border-slate-300 text-slate-800 hover:bg-slate-50; background: #fff; }
+  .btn-ghost{ @apply text-slate-700 hover:bg-slate-100; }
+
+  /* Чипы / бейджи */
+  .chip{ @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[12px] font-medium; }
+  .chip-brand{ background: color-mix(in oklab, var(--brand) 92%, white); color: #fff; }
+  .chip-verify{ background: color-mix(in oklab, var(--verify) 12%, white); color: var(--verify); border: 1px solid color-mix(in oklab, var(--verify) 30%, white); }
+  .chip-muted{ @apply text-slate-700; background: #F1F5F9; border: 1px solid #E2E8F0; }
+
+  /* Статы (равные колонки с разделителями) */
+  .stat-group{ @apply grid grid-cols-3 rounded-xl border border-slate-200 overflow-hidden bg-white; }
+  .stat{ @apply px-3 py-2.5; }
+  .stat + .stat{ @apply border-l border-slate-200; }
+  .stat-label{ @apply text-[11px] text-slate-500; }
+  .stat-value{ @apply text-sm text-slate-900 font-semibold mt-0.5; }
+
+  /* Разделитель */
+  .divider{ @apply h-px bg-slate-200/80 my-4; }
+}
+
+/* ───────────────── UTILITIES ───────────────── */
+@layer utilities{
+  /* Фон страницы как утилита (можно использовать вместо bg-brand-cream) */
+  .bg-page{
+    background: radial-gradient(1200px 600px at 50% -200px, #fff 0%, var(--bg) 60%) no-repeat,
+                var(--bg) !important;
+  }
+  /* Баланс заголовков (кросс-браузерно с фоллбеком) */
+  .text-balanced{ text-wrap: balance; }
+  /* Слабая тень для навбара/шитов */
+  .elev-1{ box-shadow: var(--shadow-1); }
+  .elev-2{ box-shadow: var(--shadow-2); }
 }

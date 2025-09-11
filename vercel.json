@@ -1,0 +1,11 @@
+﻿{
+  "version": 2,
+  "builds": [
+    {
+      "src": "apps/web/package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "dist" }
+    }
+  ],
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- apps/web"
+}

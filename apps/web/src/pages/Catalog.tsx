@@ -1,78 +1,73 @@
-import { useMemo, useState } from "react";
-import suppliers from "../mocks/suppliers.json";
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import suppliersJson from '../mocks/suppliers.json';
+import listingsJson from '../mocks/listings.json';
+import SupplierCard from '../widgets/SupplierCard';
+import { SupplierProfileSheet } from '../widgets/SupplierProfileSheet';
+import type { Supplier, Listing } from '../types';
+
+// Если вдруг файлы будут не массивами — аккуратно достанем
+const suppliers: Supplier[] = Array.isArray(suppliersJson)
+  ? (suppliersJson as Supplier[])
+  : ((suppliersJson as any)?.suppliers ?? []);
+
+const listings: Listing[] = Array.isArray(listingsJson)
+  ? (listingsJson as Listing[])
+  : ((listingsJson as any)?.listings ?? []);
 
 export default function Catalog() {
-  const [q, setQ] = useState("");
-  const [onlyVerified, setOnlyVerified] = useState(false);
+  const navigate = useNavigate();
 
-  const items = useMemo(() => {
-    const query = q.trim().toLowerCase();
-    return suppliers.filter((s) => {
-      if (onlyVerified && !s.verified) return false;
-      if (!query) return true;
-      const hay = `${s.displayName} ${s.regions.join(" ")}`.toLowerCase();
-      return hay.includes(query);
-    });
-  }, [q, onlyVerified]);
+  const [selected, setSelected] = React.useState<Supplier | null>(null);
+  const [open, setOpen] = React.useState(false);
+  const [favorites, setFavorites] = React.useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('favorites') || '[]'); } catch { return []; }
+  });
+
+  const toggleFav = (id: string) => setFavorites(prev => {
+    const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+    localStorage.setItem('favorites', JSON.stringify(next));
+    return next;
+  });
+
+  const handleOpenProfile = (s: Supplier) => { setSelected(s); setOpen(true); };
+  const handleOpenListings = (s: Supplier) => navigate(`/listings?supplierId=${s.id}`);
+  const handleReveal = async (s: Supplier) => {
+    alert(`Контакты поставщика «${s.displayName}» будут показаны после оплаты/проверки плана.`);
+  };
 
   return (
-    <div className="p-4 pb-24">
-      <div className="flex items-center gap-2 mb-3">
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Поиск по названию или региону…"
-          className="flex-1 text-sm px-3 py-2 rounded-2xl bg-white shadow outline-none text-brand-slate"
-        />
-        <button
-          onClick={() => setOnlyVerified((v) => !v)}
-          className={`px-3 py-2 rounded-2xl text-sm shadow ${
-            onlyVerified ? "bg-brand-verify text-white" : "bg-white text-brand-slate"
-          }`}
-          title="Показать только проверенных"
-        >
-          Проверено
-        </button>
-      </div>
-
-      <div className="text-xs opacity-70 mb-2">
-        Найдено: {items.length}
-        {onlyVerified && " • фильтр: Проверено"}
-        {q && ` • поиск: “${q}”`}
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        {items.length === 0 && (
-          <div className="col-span-2 text-sm opacity-70">
-            Пока нет подходящих результатов. Сбросьте фильтры или измените запрос.
+    <div className="p-3">
+      {!Array.isArray(suppliers) || !Array.isArray(listings) ? (
+        <div className="text-sm text-rose-600">
+          Ошибка данных: ожидаются массивы suppliers/listings. Проверь содержимое JSON.
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {suppliers.map((s) => (
+              <SupplierCard
+                key={s.id}
+                supplier={s}
+                listings={listings}
+                onOpenProfile={handleOpenProfile}
+                onOpenListings={handleOpenListings}
+                isFavorite={favorites.includes(s.id)}
+                onToggleFavorite={toggleFav}
+              />
+            ))}
           </div>
-        )}
 
-        {items.map((x) => (
-          <div key={x.id} className="bg-white text-brand-slate rounded-2xl p-3 shadow">
-            <div className="flex items-center gap-2">
-              <img src={x.logoUrl} className="w-8 h-8 rounded-full" />
-              <div className="text-sm font-medium">{x.displayName}</div>
-            </div>
-            <div className="mt-1 text-[11px] opacity-70">
-              Регионы: {x.regions.join(", ")}
-            </div>
-            <div className="mt-2 flex gap-2 items-center">
-              {x.verified && (
-                <span className="text-[10px] px-2 py-0.5 rounded bg-brand-verify/10 text-brand-verify">
-                  Проверено
-                </span>
-              )}
-              {x.badges?.includes("top") && (
-                <span className="text-[10px] px-2 py-0.5 rounded bg-brand-red/10 text-brand-red">
-                  ТОП
-                </span>
-              )}
-            </div>
-            <div className="mt-2 text-xs">★ {x.rating?.toFixed(1) ?? "—"}</div>
-          </div>
-        ))}
-      </div>
+          <SupplierProfileSheet
+            open={open}
+            onClose={() => setOpen(false)}
+            supplier={selected}
+            allListings={listings}
+            onRevealContact={handleReveal}
+            onOpenListings={handleOpenListings}
+          />
+        </>
+      )}
     </div>
   );
 }
