@@ -1,0 +1,20 @@
+﻿# Node / Vite / PNPM
+node_modules/
+dist/
+.vite/
+*.log
+
+# App (Vite React)
+apps/web/node_modules/
+apps/web/dist/
+apps/web/.vite/
+
+# Env (не коммитить ключи)
+.env*
+apps/web/.env*
+apps/web/.env.local
+
+# IDE/OS
+.vscode/
+.DS_Store
+Thumbs.db

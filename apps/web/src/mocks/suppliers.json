@@ -1,0 +1,8 @@
+[
+  {"id":"sup1","displayName":"СахалинФиш","logoUrl":"https://placehold.co/64x64?text=S1","regions":["RU","Asia"],"verified":true,"rating":4.7,"badges":["top"]},
+  {"id":"sup2","displayName":"КамчаткаSea","logoUrl":"https://placehold.co/64x64?text=S2","regions":["RU","EU"],"verified":false,"rating":4.4,"badges":["new_batch"]},
+  {"id":"sup3","displayName":"NordRoe","logoUrl":"https://placehold.co/64x64?text=S3","regions":["EU","ME"],"verified":true,"rating":4.9,"badges":[]},
+  {"id":"sup4","displayName":"МурманМет","logoUrl":"https://placehold.co/64x64?text=S4","regions":["RU"],"verified":false,"rating":4.2,"badges":[]},
+  {"id":"sup5","displayName":"BalticRoe","logoUrl":"https://placehold.co/64x64?text=S5","regions":["EU"],"verified":true,"rating":4.6,"badges":["top"]},
+  {"id":"sup6","displayName":"FarEast Co","logoUrl":"https://placehold.co/64x64?text=S6","regions":["Asia","ME"],"verified":false,"rating":4.1,"badges":[]}
+]
