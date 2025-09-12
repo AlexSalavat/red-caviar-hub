@@ -1,74 +1,70 @@
-import { useEffect, useState } from "react";
+import React from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+
+import Splash from "./pages/Splash";
 import Catalog from "./pages/Catalog";
 import Listings from "./pages/Listings";
 import Manufacturers from "./pages/Manufacturers";
 import Profile from "./pages/Profile";
-import BottomNav from "./widgets/BottomNav";
-import Splash from "./pages/Splash";
-import { initTMA, isTMA, getTmaUser } from "./lib/tma";
 
-export type Tab = "catalog" | "listings" | "manufacturers" | "profile";
+import BottomNav, { type TabKey } from "./widgets/BottomNav";
 
-export default function App() {
-  const [tab, setTab] = useState<Tab>("catalog");
-  const [splash, setSplash] = useState(true);
-  const [userName, setUserName] = useState<string | null>(null);
-  const [showBanner, setShowBanner] = useState(false);
+/** Лэйаут с нижней панелью — для всех страниц, кроме Splash */
+function Layout() {
+  const loc = useLocation();
+  const nav = useNavigate();
 
-  // Инициализация Telegram Mini App (в браузере — no-op) + баннер один раз
-  useEffect(() => {
-    initTMA();
-    const u = getTmaUser();
-    if (u) setUserName(u.first_name || u.username || String(u.id));
+  const path = loc.pathname;
+  const active: TabKey =
+    path.startsWith("/listings") ? "listings" :
+    path.startsWith("/manufacturers") ? "manufacturers" :
+    path.startsWith("/profile") ? "profile" :
+    "catalog";
 
-    if (!isTMA) {
-      try {
-        const seen = localStorage.getItem("rch.tma.hint");
-        if (!seen) setShowBanner(true);
-      } catch {
-        setShowBanner(true);
-      }
-    }
-  }, []);
-
-  if (splash) return <Splash onStart={() => setSplash(false)} />;
+  const go = (t: TabKey) => {
+    const map: Record<TabKey, string> = {
+      catalog: "/catalog",
+      listings: "/listings",
+      manufacturers: "/manufacturers",
+      profile: "/profile",
+    };
+    nav(map[t]);
+  };
 
   return (
-    <div className="min-h-screen pb-16 bg-page">
-      {/* Баннер-подсказка (можно закрыть навсегда) */}
-      {showBanner && (
-        <div className="fixed top-0 left-0 right-0 z-50 bg-brand-red text-white text-sm py-2 px-3">
-          <div className="max-w-screen-sm mx-auto flex items-center justify-center gap-3">
-            <span className="text-center">
-              Откройте приложение из Telegram, чтобы использовать оплаты Stars и нативный шэр.
-            </span>
-            <button
-              onClick={() => {
-                try { localStorage.setItem("rch.tma.hint", "1"); } catch {}
-                setShowBanner(false);
-              }}
-              className="ml-2 bg-white/20 hover:bg-white/30 rounded-full px-2"
-              aria-label="Закрыть"
-              title="Больше не показывать"
-            >
-              ×
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className={showBanner ? "pt-10" : ""}>
-        {userName && (
-          <div className="px-4 pt-2 text-sm opacity-70">Привет, {userName}! 👋</div>
-        )}
-
-        {tab === "catalog" && <Catalog />}
-        {tab === "listings" && <Listings />}
-        {tab === "manufacturers" && <Manufacturers />}
-        {tab === "profile" && <Profile />}
-      </div>
-
-      <BottomNav value={tab} onChange={setTab} />
+    <div className="min-h-screen bg-page-dark pb-24">
+      <Outlet />
+      <BottomNav active={active} onChange={go} />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* ВСЕГДА показываем Splash на корне */}
+        <Route path="/" element={<Splash />} />
+
+        {/* Остальные страницы в общем лэйауте с нижней панелью */}
+        <Route element={<Layout />}>
+          <Route path="/catalog" element={<Catalog />} />
+          <Route path="/listings" element={<Listings />} />
+          <Route path="/manufacturers" element={<Manufacturers />} />
+          <Route path="/profile" element={<Profile />} />
+        </Route>
+
+        {/* Фолбэк — на сплэш */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }

@@ -1,120 +1,99 @@
-import { useEffect, useMemo, useState } from "react";
-import {
-  type Plan,
-  getPlan,
-  setPlan,
-  contactLimitByPlan,
-  getReveals,
-  resetReveals,
-  planTitles,
-} from "../lib/plan";
+import React from "react";
+import type { Plan } from "../types";
 
 type CardProps = {
-  code: Exclude<Plan, null>;
+  title: string;
   price: string;
   features: string[];
-  current: boolean;
+  selected: boolean;
   onSelect: () => void;
+  badge?: string;
 };
 
-function PlanCard({ code, price, features, current, onSelect }: CardProps) {
-  return (
-    <div className={`bg-white text-brand-slate rounded-2xl p-4 shadow border
-      ${current ? "border-brand-red" : "border-transparent"}`}>
-      <div className="flex items-baseline justify-between">
-        <div className="text-lg font-semibold">{planTitles[code]}</div>
-        <div className="text-sm opacity-70">{price}</div>
-      </div>
-      <ul className="mt-2 text-sm list-disc list-inside space-y-1">
-        {features.map((f) => <li key={f}>{f}</li>)}
-      </ul>
-      <button
-        onClick={onSelect}
-        className={`mt-3 px-4 py-2 rounded-2xl text-sm font-medium
-          ${current ? "bg-brand-verify text-white" : "bg-brand-red text-white"}`}
-      >
-        {current ? "Текущий план" : "Выбрать"}
-      </button>
+const PlanCard: React.FC<CardProps> = ({ title, price, features, selected, onSelect, badge }) => (
+  <div className={"glass neon spot p-5 rounded-3xl border " + (selected ? "border-white/20" : "border-white/10")}>
+    <div className="flex items-start justify-between">
+      <h3 className="text-white font-semibold">{title}</h3>
+      {badge && <span className="pill pill-premium">{badge}</span>}
     </div>
-  );
-}
+    <div className="text-2xl font-bold mt-2" style={{ color: "var(--neon1)" }}>{price}</div>
+    <ul className="mt-3 space-y-1 text-white/75 text-sm">
+      {features.map((f, i) => <li key={i}>• {f}</li>)}
+    </ul>
+    <button onClick={onSelect} className={"mt-4 w-full btn " + (selected ? "btn-solid" : "btn-ghost")}>
+      {selected ? "Текущий план" : "Выбрать"}
+    </button>
+  </div>
+);
+
+const PLANS: { key: Plan; title: string; price: string; features: string[]; badge?: string }[] = [
+  { key: "lite", title: "Lite", price: "299 ₽/мес", features: ["Без рекламы", "Избранное", "3 контакта / мес"] },
+  { key: "pro", title: "Pro", price: "999 ₽/мес", features: ["Все контакты", "10 объявлений / мес", "1 «Проверено» / мес"], badge: "Хит" },
+  { key: "vip", title: "VIP", price: "2999 ₽/мес", features: ["Безлимит контактов", "Приоритет", "3 «Проверено» / мес", "Саппорт DM"], badge: "PRO" },
+];
 
 export default function Profile() {
-  const [plan, setPlanState] = useState<Plan>('lite');
-  const reveals = getReveals();
+  const [plan, setPlan] = React.useState<Plan>(() => (localStorage.getItem("plan") as Plan) || "lite");
+  const [reveals, setReveals] = React.useState<number>(() => Number(localStorage.getItem("reveals") || 0));
 
-  useEffect(() => {
-    setPlanState(getPlan());
-  }, []);
-
-  const limit = contactLimitByPlan(plan);
-  const revealsLeft = useMemo(() => {
-    if (limit === 'unlimited') return "безлимит";
-    return Math.max(0, limit - reveals.count);
-  }, [limit, reveals.count]);
-
-  function selectPlan(p: Exclude<Plan, null>) {
+  const select = (p: Plan) => {
     setPlan(p);
-    setPlanState(p);
-  }
+    try { localStorage.setItem("plan", String(p)); } catch {}
+  };
+
+  const resetLocal = () => {
+    try {
+      localStorage.removeItem("plan");
+      localStorage.removeItem("reveals");
+    } catch {}
+    setPlan("lite");
+    setReveals(0);
+  };
 
   return (
-    <div className="p-4 pb-24 space-y-4">
-      <div className="bg-white text-brand-slate rounded-2xl p-4 shadow">
-        <div className="font-semibold">Мой план: {plan ? planTitles[plan] : "Lite"}</div>
-        <div className="text-sm opacity-70 mt-1">
-          Лимит раскрытия контактов / мес:{" "}
-          {limit === "unlimited" ? "безлимит" : `${limit} (осталось ${revealsLeft})`}
-        </div>
-        <div className="mt-3 flex gap-2">
-          <button
-            onClick={() => resetReveals()}
-            className="px-3 py-1.5 rounded-2xl bg-white border text-sm"
-            title="Сбросить счётчик текущего месяца (для теста)"
-          >
-            Сбросить счётчик
-          </button>
-        </div>
-      </div>
+    <div className="min-h-screen bg-page-dark">
+      <div className="container-safe py-4 space-y-4">
+        <h1>Профиль</h1>
 
-      <div className="grid grid-cols-1 gap-3">
-        <PlanCard
-          code="lite"
-          price="Lite — 299 Stars/мес"
-          features={[
-            "Без рекламы",
-            "Избранное",
-            "3 контакта/мес",
-          ]}
-          current={plan === "lite" || plan === null}
-          onSelect={() => selectPlan("lite")}
-        />
-        <PlanCard
-          code="pro"
-          price="Pro — 999 Stars/мес"
-          features={[
-            "Полный доступ к контактам",
-            "10 объявлений/мес",
-            "1 «Проверено»/мес",
-          ]}
-          current={plan === "pro"}
-          onSelect={() => selectPlan("pro")}
-        />
-        <PlanCard
-          code="vip"
-          price="VIP — 2999 Stars/мес"
-          features={[
-            "Безлимит контактов, приоритет",
-            "3 «Проверено»/мес",
-            "Саппорт DM",
-          ]}
-          current={plan === "vip"}
-          onSelect={() => selectPlan("vip")}
-        />
-      </div>
+        {/* Карточка компании/пользователя */}
+        <div className="glass neon p-5 rounded-3xl">
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-xl bg-white/10 grid place-items-center border border-white/10">
+              <span className="text-white/80 font-semibold">RK</span>
+            </div>
+            <div>
+              <div className="text-white font-semibold">Рыбный край Москва</div>
+              <div className="text-white/60 text-sm">Москва</div>
+            </div>
+          </div>
+          <div className="mt-3 text-white/70 text-sm">
+            План: <span className="text-white font-semibold uppercase">{String(plan)}</span> · раскрытий контактов: {reveals}
+          </div>
+        </div>
 
-      <div className="text-xs opacity-60">
-        * Оплата и подписки позже подключим через Telegram Stars. Сейчас это локальный режим для теста UX.
+        {/* Планы */}
+        <div className="grid gap-4 md:grid-cols-3">
+          {PLANS.map((p) => (
+            <PlanCard
+              key={p.title}
+              title={p.title}
+              price={p.price}
+              features={p.features}
+              badge={p.badge}
+              selected={plan === p.key}
+              onSelect={() => select(p.key)}
+            />
+          ))}
+        </div>
+
+        {/* Настройки */}
+        <div className="glass neon p-5 rounded-3xl">
+          <h3 className="text-white font-semibold">Настройки</h3>
+          <div className="mt-3 grid gap-2 md:grid-cols-2">
+            <button className="btn btn-muted" onClick={resetLocal}>Очистить локальные данные</button>
+            <a className="btn btn-muted" href="mailto:support@example.com">Поддержка</a>
+          </div>
+        </div>
       </div>
     </div>
   );

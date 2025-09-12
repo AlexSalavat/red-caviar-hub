@@ -1,38 +1,29 @@
-export default function Splash({ onStart }: { onStart: () => void }) {
+import React from "react";
+import { useNavigate } from "react-router-dom";
+
+export default function Splash() {
+  const nav = useNavigate();
+
+  const launch = React.useCallback(() => {
+    try {
+      // @ts-ignore
+      const tg = window?.Telegram?.WebApp;
+      tg?.ready?.(); tg?.expand?.();
+    } catch {}
+    nav("/catalog", { replace: true });
+  }, [nav]);
+
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center px-6">
-      {/* Центр: видео + тексты */}
-      <div className="flex-1 w-full flex flex-col items-center justify-center gap-5">
-        <video
-          className="w-full max-w-md rounded-2xl shadow"
-          muted
-          autoPlay
-          loop
-          playsInline
-        >
-          <source src="/promo.mp4" type="video/mp4" />
-        </video>
-
-        <div className="max-w-md text-center">
-          <h1 className="text-3xl font-extrabold tracking-tight text-brand-red">
-            Red Caviar Hub
-          </h1>
-          <p className="mt-2 text-sm text-brand-slate/80">
-            Рынок красной икры: проверенные производители, оптовые партии, быстрые лиды.
-            Фильтры по ГОСТ/сортам, логистика и верификация — всё в одном месте.
-          </p>
-          <p className="mt-3 text-[11px] text-brand-slate/50">
-            Подписки и промо — через Telegram Stars. Мы — агрегатор, а не продавец.
-          </p>
+    <div className="min-h-screen bg-page-dark grid place-items-center px-6">
+      <div className="text-center">
+        <div className="mx-auto w-28 h-28 rounded-3xl glass neon spot grid place-items-center overflow-hidden">
+          <img src="/logo-mark.svg" alt="Red Caviar Hub" className="h-24 w-24 object-contain" />
         </div>
-      </div>
-
-      {/* Низ: зелёная кнопка по центру, приподнята выше низа */}
-      <div className="w-full pb-[env(safe-area-inset-bottom)] py-6 flex justify-center mb-14">
-        <button
-          onClick={onStart}
-          className="px-6 py-3 rounded-2xl bg-brand-verify text-white text-base font-semibold shadow hover:opacity-90 active:opacity-80 transition"
-        >
+        <h1 className="mt-6 text-3xl font-semibold">Red Caviar Hub</h1>
+        <p className="mt-2 text-white/70 max-w-md">
+          Каталог поставщиков, объявления о партиях и быстрые сделки. Премиум-площадка для икры и морепродуктов.
+        </p>
+        <button onClick={launch} className="mt-6 btn btn-solid rounded-2xl px-6 py-3 text-base">
           Запуск
         </button>
       </div>

@@ -10,28 +10,32 @@ export type Supplier = {
   logoUrl?: string;
   regions: string[];
   city?: string;
+
   verified?: boolean;
   rating?: number;
   badges?: string[];
 
   about?: string;
   categories?: string[];
-  products?: string[];
+  products?: string[];           // альтернативный список продукции
   warehouseAddress?: string;
+
   contacts?: {
     phone?: string;
     email?: string;
-    tg?: string;
+    tg?: string;                 // @user или https://t.me/user
+    whatsapp?: string;           // +7 ... или любая строка — мы нормализуем
     website?: string;
   };
+
   gallery?: string[];
   moqMinKg?: number | null;
   priceList?: PriceList | null;
 
   docs?: {
-    mercury?: { status?: 'linked'|'pending'|'not_linked'; orgId?: string; lastSyncAt?: string };
-    chestnyZnak?: { status?: 'linked'|'pending'|'not_linked'; companyId?: string; lastSyncAt?: string };
-    tu?: { number: string; issuedAt?: string; expiresAt?: string|null; status?: 'valid'|'pending'|'expired' }[];
+    mercury?: { status?: 'linked' | 'pending' | 'not_linked'; orgId?: string; lastSyncAt?: string };
+    chestnyZnak?: { status?: 'linked' | 'pending' | 'not_linked'; companyId?: string; lastSyncAt?: string };
+    tu?: { number: string; issuedAt?: string; expiresAt?: string | null; status?: 'valid' | 'pending' | 'expired' }[];
   };
 };
 
@@ -39,19 +43,25 @@ export type Listing = {
   id: string;
   supplierId: string;
   title: string;
+
   grade?: string;
   fishSpecies?: string;
   tu?: string | null;
+
   packaging: string[];
   batchVolumeKg: number;
   pricePerKgRUB: number;
+
   region: string;
   terms?: string[];
   photos: string[];
+
   shelfLifeDays?: number | null;
   tempRegime?: string;
-  status?: 'pending'|'approved'|'rejected'|'approved';
-  createdAt: string;
+
+  status?: 'pending' | 'approved' | 'rejected';
+  createdAt?: string;
   badges?: string[];
-  __category?: 'Красная икра'|'Краб'|'Рыба/морепродукты';
+
+  __category?: 'Красная икра' | 'Краб' | 'Рыба/морепродукты';
 };

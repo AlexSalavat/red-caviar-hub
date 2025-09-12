@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="neon" x1="0" x2="1">
+      <stop offset="0" stop-color="#4FD1FF"/><stop offset="1" stop-color="#6AA6FF"/>
+    </linearGradient>
+    <radialGradient id="roeBase" cx="35%" cy="35%" r="70%">
+      <stop offset="0"   stop-color="#FFC49B"/>
+      <stop offset="0.45" stop-color="#FF8A4D"/>
+      <stop offset="0.78" stop-color="#E24B1D"/>
+      <stop offset="1"   stop-color="#9F1C14"/>
+    </radialGradient>
+    <radialGradient id="roeCore" cx="38%" cy="32%" r="55%">
+      <stop offset="0"   stop-color="#FFE3CF" stop-opacity="0.55"/>
+      <stop offset="0.55" stop-color="#FF9A61" stop-opacity="0.22"/>
+      <stop offset="1"   stop-color="#FF6B3D" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="1.2"/>
+    </filter>
+  </defs>
+
+  <rect width="128" height="128" rx="24" fill="#0E1624"/>
+  <circle cx="64" cy="64" r="52" fill="none" stroke="url(#neon)" stroke-width="2.5"/>
+
+  <ellipse cx="86" cy="90" rx="28" ry="10" fill="#FF6B3D" opacity="0.18" filter="url(#soft)"/>
+
+  <g>
+    <circle cx="82" cy="80" r="12" fill="url(#roeBase)"/>
+    <circle cx="82" cy="80" r="11.5" fill="url(#roeCore)"/>
+    <circle cx="82" cy="80" r="12" fill="none" stroke="#812012" stroke-opacity=".55" stroke-width=".9"/>
+    <ellipse cx="78.5" cy="76.5" rx="4.6" ry="3.0" fill="#fff" opacity=".28" filter="url(#soft)"/>
+    <circle cx="79.2" cy="75.8" r="1.2" fill="#fff" opacity=".7"/>
+  </g>
+  <g>
+    <circle cx="95" cy="88" r="9.2" fill="url(#roeBase)"/>
+    <circle cx="95" cy="88" r="8.8" fill="url(#roeCore)"/>
+    <circle cx="95" cy="88" r="9.2" fill="none" stroke="#812012" stroke-opacity=".55" stroke-width=".85"/>
+    <ellipse cx="92.3" cy="85.6" rx="3.4" ry="2.2" fill="#fff" opacity=".26" filter="url(#soft)"/>
+    <circle cx="93.1" cy="85.0" r="0.9" fill="#fff" opacity=".75"/>
+  </g>
+  <g>
+    <circle cx="72" cy="88" r="10.2" fill="url(#roeBase)"/>
+    <circle cx="72" cy="88" r="9.8"  fill="url(#roeCore)"/>
+    <circle cx="72" cy="88" r="10.2" fill="none" stroke="#812012" stroke-opacity=".55" stroke-width=".85"/>
+    <ellipse cx="69.0" cy="84.8" rx="3.8" ry="2.4" fill="#fff" opacity=".25" filter="url(#soft)"/>
+    <circle cx="69.8" cy="84.2" r="0.95" fill="#fff" opacity=".75"/>
+  </g>
+  <g>
+    <circle cx="84" cy="98" r="7.4" fill="url(#roeBase)"/>
+    <circle cx="84" cy="98" r="7.0" fill="url(#roeCore)"/>
+    <circle cx="84" cy="98" r="7.4" fill="none" stroke="#812012" stroke-opacity=".55" stroke-width=".8"/>
+    <ellipse cx="82.0" cy="95.8" rx="2.6" ry="1.7" fill="#fff" opacity=".24" filter="url(#soft)"/>
+    <circle cx="82.6" cy="95.3" r="0.75" fill="#fff" opacity=".75"/>
+  </g>
+  <g>
+    <circle cx="62" cy="78" r="6.6" fill="url(#roeBase)"/>
+    <circle cx="62" cy="78" r="6.2" fill="url(#roeCore)"/>
+    <circle cx="62" cy="78" r="6.6" fill="none" stroke="#812012" stroke-opacity=".55" stroke-width=".75"/>
+    <ellipse cx="60.3" cy="76.1" rx="2.2" ry="1.5" fill="#fff" opacity=".22" filter="url(#soft)"/>
+    <circle cx="60.9" cy="75.7" r="0.6" fill="#fff" opacity=".75"/>
+  </g>
+</svg>

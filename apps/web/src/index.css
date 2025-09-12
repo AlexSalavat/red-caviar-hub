@@ -2,132 +2,136 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ───────────────── TOKENS / BASE ───────────────── */
+/* ───────── TOKENS (DARK) ───────── */
 :root{
-  /* Палитра */
-  --brand: #B5121B;
-  --brand-600: #8f0e15;
-  --verify: #19A974;
+  --bg:#0B1220;          /* фон страницы */
+  --card:#0E1624;        /* подложка карточек (стекло) */
+  --text:#E6EDF7;
+  --muted:#9AA8BF;
 
-  /* Нейтральные */
-  --bg: #f7f7f8;           /* фон приложения */
-  --surface: #ffffff;      /* карточки/листы */
-  --text: #0F172A;         /* заголовки */
-  --muted: #475569;        /* подписи/вторичный текст */
+  --neon1:#4FD1FF;       /* голубой неон */
+  --neon2:#6AA6FF;       /* сине-фиолетовый неон */
 
-  /* Радиусы/тени */
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-2xl: 24px;
-
-  --shadow-1: 0 6px 18px rgba(15, 23, 42, 0.06);
-  --shadow-2: 0 10px 30px rgba(15, 23, 42, 0.10);
+  --verify:#22C55E;      /* зелёный для "Проверено" */
 }
 
+/* ───────── BASE ───────── */
 @layer base{
   html,body,#root{ height:100%; }
   html{ scroll-behavior:smooth; }
   body{
-    @apply text-[15px] leading-6;
-    background: radial-gradient(1200px 600px at 50% -200px, #fff 0%, var(--bg) 60%) no-repeat,
-                var(--bg);
     color: var(--text);
+    background:
+      radial-gradient(1200px 600px at 50% -220px, #152139 0%, var(--bg) 60%)
+      , var(--bg);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
+  ::selection{ background: color-mix(in oklab, var(--neon1) 25%, white); color:#0a0f1a; }
 
-  /* Выделение */
-  ::selection{ background: color-mix(in oklab, var(--brand) 20%, white); color: var(--text); }
-
-  /* Скроллбар (тонкий, светлый) */
-  *::-webkit-scrollbar{ height:10px; width:10px; }
+  /* Тонкий скроллбар */
+  *::-webkit-scrollbar{ width:10px; height:10px; }
+  *::-webkit-scrollbar-thumb{ background: rgba(255,255,255,.12); border-radius:999px; }
   *::-webkit-scrollbar-track{ background: transparent; }
-  *::-webkit-scrollbar-thumb{
-    background: rgba(0,0,0,.08);
-    border-radius: 999px;
-    border: 2px solid transparent;
-    background-clip: padding-box;
-  }
-  *:hover::-webkit-scrollbar-thumb{ background: rgba(0,0,0,.12); }
 
-  /* Фокус только по клавиатуре */
-  :focus:not(:focus-visible){ outline: none; }
-  :focus-visible{
-    outline: 2px solid color-mix(in oklab, var(--brand) 55%, white);
-    outline-offset: 2px;
-    border-radius: 6px;
-  }
-
-  /* Типографика по умолчанию */
-  h1,h2,h3{ @apply text-slate-900 font-semibold tracking-tight; }
-  h1{ @apply text-2xl leading-8; }
-  h2{ @apply text-xl leading-7; }
-  h3{ @apply text-lg leading-7; }
+  h1,h2,h3{ @apply font-semibold tracking-tight; color: var(--text); }
+  h1{ @apply text-2xl; } h2{ @apply text-xl; } h3{ @apply text-lg; }
   p,small{ color: var(--muted); }
 }
 
-/* ───────────────── COMPONENT UTILITIES ───────────────── */
+/* ───────── COMPONENTS ───────── */
 @layer components{
-  /* Контейнер страницы */
   .container-safe{ @apply max-w-7xl mx-auto px-3 md:px-6; }
 
-  /* Карточки */
-  .ui-card{
-    background: var(--surface);
-    border: 1px solid rgba(15,23,42,.08);
-    border-radius: var(--radius-2xl);
-    box-shadow: var(--shadow-1);
+  /* Стеклянная карточка + неоновый контур + спотлайт */
+  .glass{
+    background: color-mix(in oklab, var(--card) 65%, transparent);
+    @apply backdrop-blur-xl rounded-3xl border border-white/10;
   }
-  .ui-card:hover{ box-shadow: var(--shadow-2); }
-
-  /* Стекло-карточка */
-  .ui-card-glass{
-    @apply backdrop-blur-xl;
-    background: color-mix(in oklab, white 70%, transparent);
-    border: 1px solid rgba(255,255,255,.6);
-    border-radius: var(--radius-2xl);
-    box-shadow: var(--shadow-1);
+  .neon{ position: relative; }
+  .neon::before{
+    content:""; position:absolute; inset:0; border-radius:inherit; padding:1px;
+    background: linear-gradient(135deg, var(--neon1), var(--neon2));
+    background-size: 200% 200%;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude; pointer-events:none;
+    animation: neonFlow 8s linear infinite;
+  }
+  .spot{ position:relative; }
+  .spot::after{
+    content:""; position:absolute; left:10%; right:10%; bottom:-18px; height:26px;
+    filter: blur(20px); opacity:.9;
+    background: radial-gradient(60% 100% at 50% 50%, color-mix(in oklab, var(--neon1) 55%, transparent), transparent 70%);
+    z-index:-1;
   }
 
   /* Кнопки */
-  .btn{ @apply inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition active:translate-y-px; }
-  .btn-primary{
-    background: linear-gradient(90deg, var(--brand) 0%, var(--brand-600) 100%);
-    color: #fff;
-    box-shadow: 0 6px 16px rgba(181,18,27,.25);
-  }
-  .btn-primary:hover{ filter: brightness(.98); }
-  .btn-secondary{ @apply border border-slate-300 text-slate-800 hover:bg-slate-50; background: #fff; }
-  .btn-ghost{ @apply text-slate-700 hover:bg-slate-100; }
+  .btn{ @apply inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-xl transition active:translate-y-px; }
+  .btn-solid{ background:#0f172a; color:#fff; border:1px solid rgba(255,255,255,.12); }
+  .btn-solid:hover{ background:#111827; box-shadow: 0 0 0 1px rgba(255,255,255,.06) inset, 0 10px 30px rgba(79,209,255,.08); }
+  .btn-ghost{ color:var(--text); border:1px solid rgba(255,255,255,.12); background:transparent; }
+  .btn-ghost:hover{ background:rgba(255,255,255,.05); box-shadow: 0 10px 24px rgba(79,209,255,.06); }
+  .btn-muted{ color:var(--muted); border:1px solid rgba(255,255,255,.1); background:transparent; }
+  .btn-muted:hover{ color:var(--text); background:rgba(255,255,255,.06); }
 
-  /* Чипы / бейджи */
-  .chip{ @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[12px] font-medium; }
-  .chip-brand{ background: color-mix(in oklab, var(--brand) 92%, white); color: #fff; }
-  .chip-verify{ background: color-mix(in oklab, var(--verify) 12%, white); color: var(--verify); border: 1px solid color-mix(in oklab, var(--verify) 30%, white); }
-  .chip-muted{ @apply text-slate-700; background: #F1F5F9; border: 1px solid #E2E8F0; }
+  /* Пилюли / бейджи */
+  .pill{ @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[12px] font-medium; }
+  .pill-verified{ color: #86efac; background:#0a2a17; border:1px solid #14532d; }
+  .pill-premium{ color:#fff; background: linear-gradient(90deg,#ff8ba7,#ffb86c,#7dd3fc); }
 
-  /* Статы (равные колонки с разделителями) */
-  .stat-group{ @apply grid grid-cols-3 rounded-xl border border-slate-200 overflow-hidden bg-white; }
-  .stat{ @apply px-3 py-2.5; }
-  .stat + .stat{ @apply border-l border-slate-200; }
-  .stat-label{ @apply text-[11px] text-slate-500; }
-  .stat-value{ @apply text-sm text-slate-900 font-semibold mt-0.5; }
+  /* Теги */
+  .tag-dark{ @apply px-2 py-0.5 rounded-full text-[12px] border; border-color: rgba(255,255,255,.14); color:#E6EDF7; background:rgba(255,255,255,.06); }
 
   /* Разделитель */
-  .divider{ @apply h-px bg-slate-200/80 my-4; }
+  .divider{ @apply h-px my-4; background: rgba(255,255,255,.1); }
+
+  /* Лёгкий подъем карточки и внутренний «жизнь» градиента */
+  .hover-raise{ transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s; }
+  .hover-raise:hover{ transform: translateY(-2px); box-shadow: 0 10px 30px rgba(79,209,255,.08); }
+
+  /* Неоновая подсветка активного элемента */
+  .active-glow{ filter: drop-shadow(0 0 10px color-mix(in oklab, var(--neon1) 60%, transparent)); }
+
+  /* Шит (нижняя панель профиля) — плавная анимация */
+  .sheet-enter { transform: translateY(100%); }
+  .sheet-open  { transform: translateY(0); transition: transform .3s ease; }
 }
 
-/* ───────────────── UTILITIES ───────────────── */
+/* ───────── UTILITIES ───────── */
 @layer utilities{
-  /* Фон страницы как утилита (можно использовать вместо bg-brand-cream) */
-  .bg-page{
-    background: radial-gradient(1200px 600px at 50% -200px, #fff 0%, var(--bg) 60%) no-repeat,
-                var(--bg) !important;
+  .bg-page-dark{
+    background: radial-gradient(1200px 600px at 50% -220px, #152139 0%, var(--bg) 60%), var(--bg) !important;
   }
-  /* Баланс заголовков (кросс-браузерно с фоллбеком) */
-  .text-balanced{ text-wrap: balance; }
-  /* Слабая тень для навбара/шитов */
-  .elev-1{ box-shadow: var(--shadow-1); }
-  .elev-2{ box-shadow: var(--shadow-2); }
+  .text-muted{ color: var(--muted); }
+  .safe-bottom { padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
+
+  @media (prefers-reduced-motion: reduce){
+    .neon::before{ animation: none !important; }
+    .hover-raise, .sheet-open{ transition: none !important; }
+  }
+}
+
+/* ───────── KEYFRAMES ───────── */
+@keyframes neonFlow{
+  0%{ background-position: 0% 50%; }
+  50%{ background-position: 100% 50%; }
+  100%{ background-position: 0% 50%; }
+}
+/* ───────── POLISH: никаких синих подчёркиваний/обводок по нажатию ───────── */
+@layer base {
+  a, a:visited { color: inherit; text-decoration: none; text-underline-offset: 3px; }
+  a:hover { text-decoration: none; }
+
+  button, a, [role="button"] {
+    -webkit-tap-highlight-color: transparent; /* мобилы */
+    text-decoration: none;
+  }
+
+  /* деликатный focus вместо синего системного */
+  :focus-visible {
+    outline: 2px solid color-mix(in oklab, var(--neon1) 45%, transparent);
+    outline-offset: 2px;
+  }
+  button:focus, button:focus-visible { outline: none; }
 }

@@ -1,16 +1,13 @@
 import React from "react";
 import type { Supplier, Listing } from "../types";
 
-/* helpers */
+/* ───────── helpers ───────── */
 const uniq = <T,>(xs: T[]) => Array.from(new Set(xs)).filter(Boolean) as T[];
 const Pill: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-    {children}
-  </span>
+  <span className="pill pill-verified">{children}</span>
 );
 
 function DocStatus({ s }: { s: Supplier }) {
-  // Показываем ТОЛЬКО если есть подключение
   const hasMercury = !!(s.docs?.mercury && (s.docs.mercury.status === "linked" || s.docs.mercury.orgId));
   const hasCZ = !!(s.docs?.chestnyZnak && (s.docs.chestnyZnak.status === "linked" || s.docs.chestnyZnak.companyId));
   if (!hasMercury && !hasCZ && !s.verified) return null;
@@ -22,8 +19,14 @@ function DocStatus({ s }: { s: Supplier }) {
     </div>
   );
 }
+const waLink = (raw?: string) => {
+  if (!raw) return null;
+  const cleaned = raw.trim().replace(/[^\d+]/g, "");
+  const digits = cleaned.startsWith("+") ? cleaned.slice(1) : cleaned;
+  return digits ? `https://wa.me/${digits}` : null;
+};
 
-/* props */
+/* ───────── props ───────── */
 export type SupplierProfileSheetProps = {
   open: boolean;
   onClose: () => void;
@@ -41,159 +44,199 @@ export function SupplierProfileSheet({
   onRevealContact,
   onOpenListings,
 }: SupplierProfileSheetProps) {
+  /* ХУКИ — ВСЕГДА ВЫЗЫВАЕМ (не зависят от условий) */
   const [contactsOpen, setContactsOpen] = React.useState(false);
   React.useEffect(() => { if (open) setContactsOpen(false); }, [open]);
-  if (!supplier) return null;
 
-  const listings = allListings
-    .filter((l) => l.supplierId === supplier.id)
-    .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
+  // Всё ниже — тоже хуки, вызываем их всегда, а внутри используем безопасные значения
+  const supplierId = supplier?.id ?? ""; // пустой id никогда не совпадёт
+  const listings = React.useMemo(() => {
+    return (allListings || [])
+      .filter((l) => l && l.supplierId === supplierId)
+      .sort((a, b) => +(new Date(b.createdAt ?? 0)) - +(new Date(a.createdAt ?? 0)));
+  }, [allListings, supplierId]);
 
-  const gallery: string[] = (supplier.gallery?.length ? supplier.gallery : listings.flatMap((l) => l.photos)).slice(0, 12);
+  const gallery: string[] = React.useMemo(() => {
+    const pics = supplier?.gallery?.length ? supplier.gallery! : listings.flatMap((l) => l.photos || []);
+    return pics.slice(0, 12);
+  }, [supplier?.gallery, listings]);
 
-  const productTags = uniq<string>(
-    ((supplier.categories?.length ? supplier.categories : supplier.products) ?? [])
-      .map(s => s.trim())
-  ).slice(0, 8);
+  const productTags = React.useMemo(() => {
+    const base = supplier?.categories?.length ? supplier!.categories! : (supplier?.products ?? []);
+    return uniq<string>(base.map((t) => (t || "").trim())).slice(0, 8);
+  }, [supplier?.categories, supplier?.products]);
 
-  const reveal = async () => {
+  const pdfUrl: string | null = React.useMemo(() => {
+    const pl = supplier?.priceList;
+    return pl && pl.type === "pdf" ? pl.url : null;
+  }, [supplier?.priceList]);
+
+  const reveal = React.useCallback(async () => {
+    if (!supplier) return;
     if (onRevealContact) await Promise.resolve(onRevealContact(supplier));
     setContactsOpen(true);
-  };
+  }, [onRevealContact, supplier]);
 
-  const contactNow = async () => {
+  const contactNow = React.useCallback(async () => {
+    if (!supplier) return;
     const tg = supplier.contacts?.tg;
+    const wa = waLink(supplier.contacts?.whatsapp);
     if (tg) {
-      const href = tg.startsWith("http") ? tg : tg.startsWith("@") ? `https://t.me/${tg.slice(1)}` : `https://t.me/${tg}`;
+      const href = tg.startsWith("http")
+        ? tg
+        : tg.startsWith("@")
+        ? `https://t.me/${tg.slice(1)}`
+        : `https://t.me/${tg}`;
       window.open(href, "_blank");
       return;
     }
+    if (wa) { window.open(wa, "_blank"); return; }
     await reveal();
-  };
+  }, [supplier, reveal]);
 
-  // Надёжное сужение типов для PDF
-  let pdfUrl: string | null = null;
-  if (supplier.priceList && supplier.priceList.type === "pdf") {
-    pdfUrl = supplier.priceList.url;
-  }
+  /* Если шит закрыт ИЛИ supplier ещё не выбран — просто ничего не рисуем,
+     но ХУКИ выше уже вызвались и порядок стабильный. */
+  if (!open || !supplier) return null;
 
+  /* ───────── UI ───────── */
   return (
     <div className={"fixed inset-0 z-50 " + (open ? "pointer-events-auto" : "pointer-events-none")}>
       {/* backdrop */}
-      <div onClick={onClose} className={"absolute inset-0 bg-black/55 transition-opacity " + (open ? "opacity-100" : "opacity-0")} />
-
+      <div
+        onClick={onClose}
+        className={
+          "absolute inset-0 bg-black/70 transition-opacity " + (open ? "opacity-100" : "opacity-0")
+        }
+      />
       {/* sheet */}
-      <div className={"absolute bottom-0 left-0 right-0 transition-transform duration-300 " + (open ? "translate-y-0" : "translate-y-full")}>
-        <div className="rounded-t-[28px] bg-white border border-slate-200 shadow-2xl">
-          {/* handle + scroll area (чтобы верх не обрезался) */}
+      <div className={"absolute bottom-0 left-0 right-0 " + (open ? "sheet-open" : "sheet-enter")}>
+        <div className="glass neon rounded-t-[28px] border-white/10">
           <div className="pt-3">
-            <div className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-slate-300/70" />
+            <div className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-white/20" />
             <div className="max-h-[90vh] overflow-y-auto px-6 pb-6">
-
               {/* Header */}
               <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-xl bg-slate-50 border border-slate-200 overflow-hidden">
+                <div className="h-12 w-12 rounded-xl bg-white/5 border border-white/10 overflow-hidden grid place-items-center">
                   {supplier.logoUrl ? (
                     <img src={supplier.logoUrl} alt={supplier.displayName} className="h-full w-full object-cover" />
                   ) : (
-                    <div className="h-full w-full grid place-items-center text-sm font-bold text-slate-600">
-                      {supplier.displayName.slice(0,2).toUpperCase()}
-                    </div>
+                    <span className="text-sm font-bold text-white/80">
+                      {supplier.displayName.slice(0, 2).toUpperCase()}
+                    </span>
                   )}
                 </div>
                 <div className="min-w-0">
-                  <div className="font-semibold text-slate-900 truncate">{supplier.displayName}</div>
-                  <div className="text-xs text-slate-600 truncate">
-                    {supplier.city ? `${supplier.city}, ` : ''}{supplier.regions.join(", ")}
+                  <div className="font-semibold text-white truncate">{supplier.displayName}</div>
+                  <div className="text-[12px] text-white/60 truncate">
+                    {supplier.city ? `${supplier.city}, ` : ""}
+                    {supplier.regions.join(", ")}
                   </div>
                 </div>
                 <div className="ml-auto flex gap-2">
-                  <button onClick={contactNow} className="btn rounded-xl bg-slate-900 text-white hover:bg-slate-800">Связаться</button>
-                  <button onClick={onClose} className="btn btn-secondary">Закрыть</button>
+                  <button onClick={contactNow} className="btn btn-solid">Связаться</button>
+                  <button onClick={onClose} className="btn btn-muted">Закрыть</button>
                 </div>
               </div>
 
-              {/* Зелёные статусы (если есть) */}
+              {/* Статусы */}
               <div className="mt-3">
                 <DocStatus s={supplier} />
               </div>
 
-              {/* 1) Категории / Продукция */}
+              {/* Категории / Продукция */}
               {!!productTags.length && (
                 <section className="mt-4">
-                  <div className="text-xs uppercase tracking-wide text-slate-500">Категории / Продукция</div>
+                  <div className="text-xs uppercase tracking-wide text-white/60">Категории / Продукция</div>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {productTags.map(t => (
-                      <span key={t} className="chip chip-muted">{t}</span>
+                    {productTags.map((t) => (
+                      <span key={t} className="tag-dark">{t}</span>
                     ))}
                   </div>
                 </section>
               )}
 
-              {/* 2) Краткое описание компании */}
+              {/* О компании */}
               {supplier.about && (
-                <section className="mt-4 rounded-xl border border-slate-200 p-4">
-                  <div className="text-sm font-semibold mb-1">Краткое описание компании</div>
-                  <div className="text-sm text-slate-700 whitespace-pre-wrap">{supplier.about}</div>
+                <section className="mt-4 rounded-2xl border border-white/10 p-4 bg-white/[.03]">
+                  <div className="text-sm font-semibold mb-1 text-white">Краткое описание компании</div>
+                  <div className="text-sm text-white/70 whitespace-pre-wrap">{supplier.about}</div>
                 </section>
               )}
 
-              {/* 3) Прайс (только файл/ссылка) */}
-              <section className="mt-4 rounded-xl border border-slate-200 p-4">
-                <div className="text-sm font-semibold mb-2">Прайс-лист</div>
+              {/* Прайс */}
+              <section className="mt-4 rounded-2xl border border-white/10 p-4 bg-white/[.03]">
+                <div className="text-sm font-semibold mb-2 text-white">Прайс-лист</div>
                 {pdfUrl ? (
                   <div className="flex gap-2">
-                    <a
-                      href={pdfUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="btn rounded-xl bg-slate-900 text-white hover:bg-slate-800"
-                    >
-                      Открыть PDF
-                    </a>
-                    <a
-                      href={pdfUrl}
-                      download
-                      className="btn btn-secondary"
-                    >
-                      Скачать
-                    </a>
+                    <a href={pdfUrl} target="_blank" rel="noreferrer" className="btn btn-solid">Открыть PDF</a>
+                    <a href={pdfUrl} download className="btn btn-muted">Скачать</a>
                   </div>
                 ) : (
-                  <div className="text-sm text-slate-600">Прайс доступен по запросу.</div>
+                  <div className="text-sm text-white/70">Прайс доступен по запросу.</div>
                 )}
               </section>
 
-              {/* 4) Контакты */}
-              {(supplier.contacts && (supplier.contacts.phone || supplier.contacts.email || supplier.contacts.tg || supplier.contacts.website)) && (
+              {/* Контакты */}
+              {Boolean(
+                supplier.contacts &&
+                  (supplier.contacts.phone ||
+                    supplier.contacts.email ||
+                    supplier.contacts.tg ||
+                    supplier.contacts.whatsapp ||
+                    supplier.contacts.website)
+              ) && (
                 <section className="mt-4">
                   <div className="flex items-center justify-between">
-                    <div className="text-sm font-semibold">Контакты</div>
-                    {!contactsOpen && <button onClick={reveal} className="btn btn-secondary">Показать</button>}
+                    <div className="text-sm font-semibold text-white">Контакты</div>
+                    {!contactsOpen && (
+                      <button onClick={reveal} className="btn btn-muted">Показать</button>
+                    )}
                   </div>
                   {contactsOpen && (
-                    <div className="mt-2 rounded-xl border border-slate-200 divide-y">
-                      {supplier.contacts.phone && (
+                    <div className="mt-2 rounded-2xl border border-white/10 divide-y divide-white/10 bg-white/[.03]">
+                      {supplier.contacts?.phone && (
                         <div className="px-4 py-2 text-sm">
-                          <span className="text-slate-500">Тел.: </span>
-                          <a href={`tel:${supplier.contacts.phone}`} className="hover:underline">{supplier.contacts.phone}</a>
+                          <span className="text-white/60">Тел.: </span>
+                          <a href={`tel:${supplier.contacts.phone}`} className="hover:underline">
+                            {supplier.contacts.phone}
+                          </a>
                         </div>
                       )}
-                      {supplier.contacts.email && (
+                      {supplier.contacts?.whatsapp && (
                         <div className="px-4 py-2 text-sm">
-                          <span className="text-slate-500">Email: </span>
-                          <a href={`mailto:${supplier.contacts.email}`} className="hover:underline">{supplier.contacts.email}</a>
+                          <span className="text-white/60">WhatsApp: </span>
+                          {(() => {
+                            const link = waLink(supplier.contacts?.whatsapp);
+                            return link ? (
+                              <a href={link} target="_blank" className="hover:underline">
+                                {supplier.contacts!.whatsapp}
+                              </a>
+                            ) : (
+                              supplier.contacts!.whatsapp
+                            );
+                          })()}
                         </div>
                       )}
-                      {supplier.contacts.tg && (
+                      {supplier.contacts?.tg && (
                         <div className="px-4 py-2 text-sm">
-                          <span className="text-slate-500">Telegram: </span>{supplier.contacts.tg}
+                          <span className="text-white/60">Telegram: </span>
+                          {supplier.contacts.tg}
                         </div>
                       )}
-                      {supplier.contacts.website && (
+                      {supplier.contacts?.email && (
+                        <div className="px-4 py-2 text-sm">
+                          <span className="text-white/60">Email: </span>
+                          <a href={`mailto:${supplier.contacts.email}`} className="hover:underline">
+                            {supplier.contacts.email}
+                          </a>
+                        </div>
+                      )}
+                      {supplier.contacts?.website && (
                         <div className="px-4 py-2 text-sm truncate">
-                          <span className="text-slate-500">Сайт: </span>
-                          <a href={supplier.contacts.website} target="_blank" className="hover:underline">{supplier.contacts.website}</a>
+                          <span className="text-white/60">Сайт: </span>
+                          <a href={supplier.contacts.website} target="_blank" className="hover:underline">
+                            {supplier.contacts.website}
+                          </a>
                         </div>
                       )}
                     </div>
@@ -201,11 +244,11 @@ export function SupplierProfileSheet({
                 </section>
               )}
 
-              {/* 5) Адрес */}
-              {(supplier.city || supplier.warehouseAddress || supplier.regions.length) && (
-                <section className="mt-4 rounded-xl border border-slate-200 p-4">
-                  <div className="text-sm font-semibold mb-1">Адрес</div>
-                  <div className="text-sm text-slate-700">
+              {/* Адрес */}
+              {Boolean(supplier.city || supplier.warehouseAddress || supplier.regions.length) && (
+                <section className="mt-4 rounded-2xl border border-white/10 p-4 bg-white/[.03]">
+                  <div className="text-sm font-semibold mb-1 text-white">Адрес</div>
+                  <div className="text-sm text-white/70">
                     {supplier.city ? <>Город: {supplier.city}<br /></> : null}
                     {supplier.regions.length ? <>Регионы: {supplier.regions.join(", ")}<br /></> : null}
                     {supplier.warehouseAddress ? <>Склад: {supplier.warehouseAddress}</> : null}
@@ -213,41 +256,41 @@ export function SupplierProfileSheet({
                 </section>
               )}
 
-              {/* 6) Галерея фото */}
+              {/* Галерея */}
               {!!gallery.length && (
                 <section className="mt-4">
-                  <div className="text-xs uppercase tracking-wide text-slate-500">Галерея фото</div>
+                  <div className="text-xs uppercase tracking-wide text-white/60">Галерея фото</div>
                   <div className="mt-2 grid grid-cols-4 gap-2">
                     {gallery.map((src, i) => (
-                      <div key={i} className="aspect-square overflow-hidden rounded-xl bg-slate-100">
-                        <img src={src} alt="gallery" className="h-full w-full object-cover" />
+                      <div key={`${src}-${i}`} className="aspect-square overflow-hidden rounded-xl bg-white/10">
+                        <img src={src} alt="gallery" className="h-full w-full object-cover transition group-hover:scale-[1.02]" />
                       </div>
                     ))}
                   </div>
                 </section>
               )}
 
-              {/* 7) Объявления (в конце) */}
+              {/* Объявления */}
               <section className="mt-4">
-                <div className="text-xs uppercase tracking-wide text-slate-500">Объявления</div>
+                <div className="text-xs uppercase tracking-wide text-white/60">Объявления</div>
                 {listings.length === 0 ? (
-                  <div className="mt-2 text-sm text-slate-500">Нет опубликованных объявлений</div>
+                  <div className="mt-2 text-sm text-white/70">Нет опубликованных объявлений</div>
                 ) : (
                   <ul className="mt-2 space-y-2">
                     {listings.slice(0, 3).map((l) => (
-                      <li key={l.id} className="rounded-xl border border-slate-200 p-3">
+                      <li key={l.id} className="rounded-2xl border border-white/10 p-3 bg-white/[.03]">
                         <div className="flex items-center justify-between gap-3">
                           <div className="min-w-0">
-                            <div className="font-medium text-slate-900 truncate">{l.title}</div>
-                            <div className="text-xs text-slate-600">
-                              {l.region} · {new Date(l.createdAt).toLocaleDateString("ru-RU")}
+                            <div className="font-medium text-white truncate">{l.title}</div>
+                            <div className="text-xs text-white/60">
+                              {l.region} · {new Date(l.createdAt ?? Date.now()).toLocaleDateString("ru-RU")}
                             </div>
                           </div>
                           <div className="text-right shrink-0">
-                            <div className="font-semibold text-slate-900">
+                            <div className="font-semibold text-white">
                               {l.pricePerKgRUB.toLocaleString("ru-RU")} ₽/кг
                             </div>
-                            <div className="text-xs text-slate-600">
+                            <div className="text-xs text-white/60">
                               Объём: {l.batchVolumeKg.toLocaleString("ru-RU")} кг
                             </div>
                           </div>
@@ -257,7 +300,7 @@ export function SupplierProfileSheet({
                   </ul>
                 )}
                 <div className="mt-3">
-                  <button onClick={() => onOpenListings?.(supplier)} className="btn rounded-xl bg-slate-900 text-white hover:bg-slate-800">
+                  <button onClick={() => supplier && onOpenListings?.(supplier)} className="btn btn-solid">
                     Все объявления
                   </button>
                 </div>
