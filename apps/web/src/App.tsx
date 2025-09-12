@@ -40,7 +40,8 @@ function Layout() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-page-dark pb-[var(--app-bottom-pad)]">
+    <div className="min-h-[100svh] bg-page-dark pb-[calc(80px+env(safe-area-inset-bottom))]">
+      {/* 100svh устойчив к адресной строке; нижний паддинг — высота панели + safe-area */}
       <Outlet />
       <BottomNav active={active} onChange={go} />
     </div>

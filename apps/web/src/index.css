@@ -137,16 +137,35 @@
   --app-bottom-pad: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px) + 16px);
 }
 
-@layer utilities {
-  /* контейнер с горизонтальными отступами */
-  .container-safe { margin: 0 auto; max-width: 1024px; padding-left: 16px; padding-right: 16px; }
+/* ───────── Mobile Fix v2: устойчивые viewport-единицы, safe-area, no-zoom ───────── */
+/* ───────── Mobile Fix v2: устойчивые viewport-единицы, safe-area, no-zoom ───────── */
+@layer base {
+  html, body, #root { height: 100%; }
 
-  /* нижняя safe-зона (используется в панели) */
-  .safe-bottom { padding-bottom: max(env(safe-area-inset-bottom), 12px); }
+  /* базовый фолбэк для старых iOS */
+  body { min-height: -webkit-fill-available; }
 
-  /* убрать тап-подсветку и подчёркивания */
-  .no-tap { -webkit-tap-highlight-color: transparent; }
+  /* затем dvh, если поддерживается */
+  @supports (height: 100dvh) {
+    body { min-height: 100dvh; }
+  }
+
+  /* приоритетно svh (самое стабильное на мобилках) — перекроет dvh */
+  @supports (height: 100svh) {
+    body { min-height: 100svh; }
+  }
+
+  /* iOS не будет зумить инпуты */
+  input, select, textarea { font-size: 16px; }
 }
 
-/* на всякий — отключаем прокрутку под фикс-панелью */
-body { overscroll-behavior-y: contain; }
+/* базовая профилактика переполнений на узких экранах */
+* { min-width: 0; }
+img { max-width: 100%; height: auto; display: block; }
+/* Listings: мелкие полировки */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
