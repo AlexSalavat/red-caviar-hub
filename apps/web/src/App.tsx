@@ -17,7 +17,7 @@ import Profile from "./pages/Profile";
 
 import BottomNav, { type TabKey } from "./widgets/BottomNav";
 
-/** Лэйаут с нижней панелью — для всех страниц, кроме Splash */
+/** Общий лэйаут со стабильной нижней панелью (на всех, кроме Splash) */
 function Layout() {
   const loc = useLocation();
   const nav = useNavigate();
@@ -40,7 +40,7 @@ function Layout() {
   };
 
   return (
-    <div className="min-h-screen bg-page-dark pb-24">
+    <div className="min-h-[100dvh] bg-page-dark pb-[var(--app-bottom-pad)]">
       <Outlet />
       <BottomNav active={active} onChange={go} />
     </div>
@@ -51,10 +51,10 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* ВСЕГДА показываем Splash на корне */}
+        {/* Всегда показываем Splash на корне */}
         <Route path="/" element={<Splash />} />
 
-        {/* Остальные страницы в общем лэйауте с нижней панелью */}
+        {/* Все основные экраны под общим лэйаутом */}
         <Route element={<Layout />}>
           <Route path="/catalog" element={<Catalog />} />
           <Route path="/listings" element={<Listings />} />
@@ -62,7 +62,7 @@ export default function App() {
           <Route path="/profile" element={<Profile />} />
         </Route>
 
-        {/* Фолбэк — на сплэш */}
+        {/* Фолбэк */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

@@ -1,10 +1,9 @@
 import React from "react";
 
 export type TabKey = "catalog" | "listings" | "manufacturers" | "profile";
-
 type Props = { active: TabKey; onChange: (tab: TabKey) => void };
 
-/* Иконки — минимализм */
+/* Иконки */
 const iconCls = "h-6 w-6";
 const stroke = "currentColor";
 
@@ -52,12 +51,15 @@ const ITEMS: { key: TabKey; label: string; Icon: React.FC }[] = [
 export default function BottomNav({ active, onChange }: Props) {
   const activeIdx = Math.max(0, ITEMS.findIndex(i => i.key === active));
   return (
-    <div className="fixed bottom-3 left-0 right-0 z-50 pointer-events-none safe-bottom">
-      <div className="container-safe max-w-2xl pointer-events-auto">
-        <nav className="relative glass neon rounded-3xl border-white/10 px-2 py-1.5 backdrop-saturate-150">
-          {/* Индикация активной вкладки: ровная капсула, двигается плавно */}
+    <div
+      className="fixed left-0 right-0 z-50 pointer-events-none"
+      style={{ bottom: "max(env(safe-area-inset-bottom), 12px)" }}
+    >
+      <div className="container-safe pointer-events-auto">
+        <nav className="relative glass neon rounded-3xl border-white/10 px-2 h-[64px] backdrop-saturate-150">
+          {/* активная капсула */}
           <div
-            className="absolute inset-y-1 left-2 w-1/4 rounded-2xl border border-white/10 bg-white/10 transition-transform duration-300 ease-out"
+            className="absolute inset-y-2 left-2 w-1/4 rounded-2xl border border-white/10 bg-white/10 transition-transform duration-300 ease-out"
             style={{ transform: `translateX(${activeIdx * 100}%)` }}
           />
           <ul className="relative grid grid-cols-4">
@@ -68,13 +70,11 @@ export default function BottomNav({ active, onChange }: Props) {
                   <button
                     onClick={() => onChange(key)}
                     className={
-                      "w-full h-full px-3 py-2 flex flex-col items-center justify-center text-[11px] leading-none font-medium rounded-2xl " +
+                      "w-full h-[60px] px-3 flex flex-col items-center justify-center text-[11px] leading-none font-medium rounded-2xl no-tap " +
                       (isActive ? "text-white" : "text-white/75 hover:text-white")
                     }
                     title={label}
                     aria-current={isActive ? "page" : undefined}
-                    // убираем любые браузерные хвосты
-                    style={{ WebkitTapHighlightColor: "transparent" }}
                   >
                     <div className="h-6 grid place-items-center">
                       <Icon />

@@ -118,20 +118,35 @@
   50%{ background-position: 100% 50%; }
   100%{ background-position: 0% 50%; }
 }
-/* ───────── POLISH: никаких синих подчёркиваний/обводок по нажатию ───────── */
+/* ───────── Mobile polish: dvh + safe-area + no-zoom ───────── */
 @layer base {
-  a, a:visited { color: inherit; text-decoration: none; text-underline-offset: 3px; }
-  a:hover { text-decoration: none; }
-
-  button, a, [role="button"] {
-    -webkit-tap-highlight-color: transparent; /* мобилы */
-    text-decoration: none;
+  html, body, #root { height: 100%; }
+  /* корректная высота экрана с учётом адресной строки iOS */
+  @supports (height: 100dvh) {
+    body { min-height: 100dvh; }
   }
-
-  /* деликатный focus вместо синего системного */
-  :focus-visible {
-    outline: 2px solid color-mix(in oklab, var(--neon1) 45%, transparent);
-    outline-offset: 2px;
+  @supports not (height: 100dvh) {
+    body { min-height: -webkit-fill-available; }
   }
-  button:focus, button:focus-visible { outline: none; }
+  /* iOS не увеличивает зум, если font-size >= 16px */
+  input, select, textarea { font-size: 16px; }
 }
+
+:root {
+  --bottom-nav-h: 64px; /* высота панели снизу */
+  --app-bottom-pad: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px) + 16px);
+}
+
+@layer utilities {
+  /* контейнер с горизонтальными отступами */
+  .container-safe { margin: 0 auto; max-width: 1024px; padding-left: 16px; padding-right: 16px; }
+
+  /* нижняя safe-зона (используется в панели) */
+  .safe-bottom { padding-bottom: max(env(safe-area-inset-bottom), 12px); }
+
+  /* убрать тап-подсветку и подчёркивания */
+  .no-tap { -webkit-tap-highlight-color: transparent; }
+}
+
+/* на всякий — отключаем прокрутку под фикс-панелью */
+body { overscroll-behavior-y: contain; }

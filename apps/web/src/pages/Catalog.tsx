@@ -41,7 +41,6 @@ export default function Catalog() {
   };
 
   const onOpenListings = (s: Supplier) => {
-    // ведём на ленту объявлений c фильтром supplierId
     nav(`/listings?supplierId=${encodeURIComponent(s.id)}`);
   };
 
@@ -49,7 +48,7 @@ export default function Catalog() {
     <div className="min-h-screen bg-page-dark">
       <div className="container-safe py-4 space-y-4">
 
-        {/* Поиск наверху */}
+        {/* Поиск */}
         <div className="glass neon rounded-3xl p-3">
           <div className="flex items-center gap-3">
             <div className="shrink-0 h-9 w-9 rounded-xl border border-white/10 bg-white/5 grid place-items-center">
@@ -59,7 +58,7 @@ export default function Catalog() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Поиск по названию, городу, регионам или продукции…"
-              className="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-sm placeholder:text-white/40 text-white outline-none focus:ring-2 focus:ring-white/20"
+              className="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-base placeholder:text-white/40 text-white outline-none focus:ring-2 focus:ring-white/20"
             />
             {q && (
               <button onClick={() => setQ("")} className="btn btn-muted px-3">
@@ -73,7 +72,7 @@ export default function Catalog() {
         </div>
 
         {/* Грид компаний */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
           {filtered.map((s) => (
             <SupplierCard
               key={s.id}
