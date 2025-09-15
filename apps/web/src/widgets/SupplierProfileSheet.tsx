@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Supplier, Listing } from "../types";
 
-/** Премиум-шит профиля поставщика.
- * Микроанимации на CSS, без framer-motion.
- */
 export default function SupplierProfileSheet({
   open,
   supplier,
@@ -16,14 +13,25 @@ export default function SupplierProfileSheet({
   onClose: () => void;
 }) {
   const [showContacts, setShowContacts] = useState(false);
+
+  // Сброс контактов при открытии/смене поставщика
   useEffect(() => { setShowContacts(false); }, [open, supplier?.id]);
 
+  // ESC для закрытия
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
+
+  // Лочим прокрутку фона, чтобы скроллился только шит
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.documentElement.style.overflow;
+    document.documentElement.style.overflow = "hidden";
+    return () => { document.documentElement.style.overflow = prev; };
+  }, [open]);
 
   const docs = supplier?.docs || {};
   const hasMercury = docs?.mercury?.status === "linked";
@@ -32,11 +40,9 @@ export default function SupplierProfileSheet({
 
   const gallery = useMemo(() => {
     if (!supplier) return [];
-    const g = supplier.gallery && supplier.gallery.length ? supplier.gallery : [];
-    const fromListings = listings
-      .filter(l => l.supplierId === supplier.id)
-      .flatMap(l => l.photos || []);
-    return (g.length ? g : fromListings).slice(0, 20);
+    const base = supplier.gallery && supplier.gallery.length ? supplier.gallery : [];
+    const fromListings = listings.filter(l => l.supplierId === supplier.id).flatMap(l => l.photos || []);
+    return (base.length ? base : fromListings).slice(0, 20);
   }, [supplier, listings]);
 
   const last3 = useMemo(() => {
@@ -50,65 +56,88 @@ export default function SupplierProfileSheet({
   if (!open || !supplier) return null;
 
   return (
-    <div className="fixed inset-0 z-[60]">
-      {/* overlay */}
+    <div className="fixed inset-0 z-[70]">
+      {/* затемнение подложки */}
       <button
         className="absolute inset-0 bg-black/50 opacity-0 transition-opacity duration-200 data-[show=true]:opacity-100"
         data-show={open}
         onClick={onClose}
         aria-label="Закрыть"
       />
-      {/* panel */}
-      <div
-        className="absolute inset-x-0 bottom-0 sm:inset-0 sm:flex sm:items-center sm:justify-center pointer-events-none"
-        aria-hidden
-      >
-        <section
-          className="pointer-events-auto bg-transparent"
-          style={{ width: "100%" }}
-        >
-          <div
-            className="glass glass-neon mx-auto mt-auto sm:mt-0 max-w-[980px] rounded-t-2xl sm:rounded-2xl border border-[var(--border)]
-                       translate-y-4 opacity-0 transition-all duration-220 ease-out data-[show=true]:translate-y-0 data-[show=true]:opacity-100"
-            data-show={open}
-          >
-            {/* шапка */}
-            <header className="p-4 border-b border-[var(--border)] flex items-start justify-between gap-3">
-              <div className="flex items-start gap-3 min-w-0">
-                <div className="logo-wrap">
-                  {supplier.logoUrl ? (
-                    <img className="logo-img" src={supplier.logoUrl} alt={supplier.displayName} loading="lazy" decoding="async" />
-                  ) : (
-                    <div className="avatar">{initials(supplier.displayName)}</div>
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <h2 className="text-base font-semibold truncate">{supplier.displayName}</h2>
-                  <div className="text-xs truncate" style={{ color: "var(--muted)" }}>
-                    {[supplier.city, (supplier.regions || []).join(", ")].filter(Boolean).join(" • ")}
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {hasMercury && <span className="pill">Меркурий</span>}
-                    {hasCZ && <span className="pill">Честный знак</span>}
-                    {verified && <span className="pill pill-verified">Проверено</span>}
-                    {(supplier.categories || []).slice(0, 4).map((c) => <span key={c} className="tag-dark">{c}</span>)}
-                  </div>
-                </div>
-              </div>
 
-              <div className="shrink-0 flex items-center gap-2">
-                {supplier.priceList?.url && (
-                  <a className="btn px-3 py-1.5 text-[12px]" href={supplier.priceList.url} target="_blank" rel="noreferrer">Прайс (PDF)</a>
-                )}
-                <button className="btn px-3 py-1.5 text-[12px]" onClick={onClose}>Закрыть</button>
+      {/* контейнер панели: снизу на мобиле, центр на >=sm */}
+      <div className="absolute inset-x-0 bottom-0 sm:inset-0 sm:flex sm:items-center sm:justify-center">
+        <section
+          role="dialog"
+          aria-modal="true"
+          aria-label={supplier.displayName}
+          className="
+            glass glass-neon mx-auto mt-auto sm:mt-0 w-full max-w-[980px]
+            rounded-t-2xl sm:rounded-2xl border border-[var(--border)]
+            translate-y-4 opacity-0 transition-all duration-200 ease-out
+            data-[show=true]:translate-y-0 data-[show=true]:opacity-100
+            overflow-hidden
+          "
+          data-show={open}
+          // ВАЖНО: скроллим внутри секции, а не body
+          style={{
+            maxHeight: "calc(100svh - 16px)",
+            WebkitOverflowScrolling: "touch" as any,
+          }}
+        >
+          {/* Внутренний scroll-контейнер */}
+          <div
+            className="overflow-y-auto overscroll-contain"
+            style={{
+              maxHeight: "calc(100svh - 16px)",
+              WebkitOverflowScrolling: "touch" as any,
+            }}
+          >
+            {/* Шапка: делаем sticky + safe-area */}
+            <header
+              className="sticky top-0 z-10 p-4 border-b border-[var(--border)]
+                         backdrop-blur-sm"
+              style={{
+                background: "rgba(18,24,38,.72)",
+                paddingTop: "max(env(safe-area-inset-top), 12px)",
+              }}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="logo-wrap">
+                    {supplier.logoUrl ? (
+                      <img className="logo-img" src={supplier.logoUrl} alt={supplier.displayName} loading="lazy" decoding="async" />
+                    ) : (
+                      <div className="avatar">{initials(supplier.displayName)}</div>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="text-base font-semibold truncate">{supplier.displayName}</h2>
+                    <div className="text-xs truncate" style={{ color: "var(--muted)" }}>
+                      {[supplier.city, (supplier.regions || []).join(", ")].filter(Boolean).join(" • ")}
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {hasMercury && <span className="pill">Меркурий</span>}
+                      {hasCZ && <span className="pill">Честный знак</span>}
+                      {verified && <span className="pill pill-verified">Проверено</span>}
+                      {(supplier.categories || []).slice(0, 4).map((c) => <span key={c} className="tag-dark">{c}</span>)}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="shrink-0 flex items-center gap-2">
+                  {supplier.priceList?.url && (
+                    <a className="btn px-3 py-1.5 text-[12px]" href={supplier.priceList.url} target="_blank" rel="noreferrer">Прайс (PDF)</a>
+                  )}
+                  <button className="btn px-3 py-1.5 text-[12px]" onClick={onClose}>Закрыть</button>
+                </div>
               </div>
             </header>
 
-            {/* тело */}
+            {/* Контент */}
             <div className="p-4 grid grid-cols-1 lg:grid-cols-[1fr,320px] gap-4">
               {/* левая колонка */}
               <div className="space-y-4">
-                {/* Описание */}
                 {(supplier.about || supplier.warehouseAddress) && (
                   <div className="glass p-4 rounded-xl border border-[var(--border)]">
                     {supplier.about && <p className="text-sm leading-relaxed">{supplier.about}</p>}
@@ -158,7 +187,6 @@ export default function SupplierProfileSheet({
 
               {/* правая колонка */}
               <aside className="space-y-4">
-                {/* Контакты */}
                 <div className="glass p-4 rounded-xl border border-[var(--border)]">
                   <div className="flex items-center justify-between">
                     <div className="text-sm font-semibold">Контакты</div>
@@ -210,9 +238,7 @@ export default function SupplierProfileSheet({
 }
 
 function Badge({ ok, label, green }: { ok: boolean; label: string; green?: boolean }) {
-  if (green) {
-    return <span className={`pill ${ok ? "pill-verified" : ""}`}>{label}{!ok && " — нет"}</span>;
-  }
+  if (green) return <span className={`pill ${ok ? "pill-verified" : ""}`}>{label}{!ok && " — нет"}</span>;
   return <span className="pill">{label}{!ok && " — нет"}</span>;
 }
 
