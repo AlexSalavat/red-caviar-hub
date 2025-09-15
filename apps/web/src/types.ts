@@ -1,41 +1,28 @@
-export type Plan = 'lite' | 'pro' | 'vip' | null;
-
-export type PriceList =
-  | { type: 'pdf'; url: string }
-  | { type: 'text'; text: string };
-
 export type Supplier = {
   id: string;
   displayName: string;
   logoUrl?: string;
   regions: string[];
   city?: string;
-
   verified?: boolean;
   rating?: number;
   badges?: string[];
-
-  about?: string;
   categories?: string[];
-  products?: string[];           // альтернативный список продукции
+  products?: string[];
+  about?: string;
   warehouseAddress?: string;
-
   contacts?: {
     phone?: string;
+    whatsapp?: string;
+    tg?: string;             // @handle или https://t.me/...
     email?: string;
-    tg?: string;                 // @user или https://t.me/user
-    whatsapp?: string;           // +7 ... или любая строка — мы нормализуем
     website?: string;
   };
-
-  gallery?: string[];
-  moqMinKg?: number | null;
-  priceList?: PriceList | null;
-
+  gallery?: string[];        // /gallery/supX-001.webp…
+  priceList?: { url: string }; // <— ВАЖНО: добавлено
   docs?: {
-    mercury?: { status?: 'linked' | 'pending' | 'not_linked'; orgId?: string; lastSyncAt?: string };
-    chestnyZnak?: { status?: 'linked' | 'pending' | 'not_linked'; companyId?: string; lastSyncAt?: string };
-    tu?: { number: string; issuedAt?: string; expiresAt?: string | null; status?: 'valid' | 'pending' | 'expired' }[];
+    mercury?: { status?: "linked"; orgId?: string };
+    chestnyZnak?: { status?: "linked"; companyId?: string };
   };
 };
 
@@ -43,25 +30,16 @@ export type Listing = {
   id: string;
   supplierId: string;
   title: string;
-
-  grade?: string;
-  fishSpecies?: string;
-  tu?: string | null;
-
-  packaging: string[];
+  packaging?: string[];
   batchVolumeKg: number;
   pricePerKgRUB: number;
-
   region: string;
   terms?: string[];
-  photos: string[];
-
+  photos?: string[];
   shelfLifeDays?: number | null;
   tempRegime?: string;
-
-  status?: 'pending' | 'approved' | 'rejected';
-  createdAt?: string;
+  status?: "pending" | "approved" | "rejected";
   badges?: string[];
-
-  __category?: 'Красная икра' | 'Краб' | 'Рыба/морепродукты';
+  createdAt?: string;
+  __category?: "Красная икра" | "Краб" | "Рыба/морепродукты";
 };

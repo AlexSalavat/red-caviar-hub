@@ -16,7 +16,7 @@ export default function A2HSPrompt() {
   const deferredRef = useRef<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
-    if (isTMA()) return;                      // скрыть в TMA
+    if (isTMA()) return;
     if (localStorage.getItem("a2hs.dismissed") === "1") return;
 
     const onBeforeInstall = (e: Event) => {

@@ -14,10 +14,7 @@ export default function SupplierProfileSheet({
 }) {
   const [showContacts, setShowContacts] = useState(false);
 
-  // Сброс контактов при открытии/смене поставщика
   useEffect(() => { setShowContacts(false); }, [open, supplier?.id]);
-
-  // ESC для закрытия
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -25,7 +22,7 @@ export default function SupplierProfileSheet({
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  // Лочим прокрутку фона, чтобы скроллился только шит
+  // Лочим прокрутку фона, скроллим только шит
   useEffect(() => {
     if (!open) return;
     const prev = document.documentElement.style.overflow;
@@ -57,7 +54,7 @@ export default function SupplierProfileSheet({
 
   return (
     <div className="fixed inset-0 z-[70]">
-      {/* затемнение подложки */}
+      {/* overlay */}
       <button
         className="absolute inset-0 bg-black/50 opacity-0 transition-opacity duration-200 data-[show=true]:opacity-100"
         data-show={open}
@@ -65,7 +62,6 @@ export default function SupplierProfileSheet({
         aria-label="Закрыть"
       />
 
-      {/* контейнер панели: снизу на мобиле, центр на >=sm */}
       <div className="absolute inset-x-0 bottom-0 sm:inset-0 sm:flex sm:items-center sm:justify-center">
         <section
           role="dialog"
@@ -79,41 +75,42 @@ export default function SupplierProfileSheet({
             overflow-hidden
           "
           data-show={open}
-          // ВАЖНО: скроллим внутри секции, а не body
-          style={{
-            maxHeight: "calc(100svh - 16px)",
-            WebkitOverflowScrolling: "touch" as any,
-          }}
+          style={{ maxHeight: "calc(100svh - 16px)", WebkitOverflowScrolling: "touch" as any }}
         >
-          {/* Внутренний scroll-контейнер */}
-          <div
-            className="overflow-y-auto overscroll-contain"
-            style={{
-              maxHeight: "calc(100svh - 16px)",
-              WebkitOverflowScrolling: "touch" as any,
-            }}
-          >
-            {/* Шапка: делаем sticky + safe-area */}
+          <div className="overflow-y-auto overscroll-contain" style={{ maxHeight: "calc(100svh - 16px)", WebkitOverflowScrolling: "touch" as any }}>
+            {/* Шапка */}
             <header
-              className="sticky top-0 z-10 p-4 border-b border-[var(--border)]
-                         backdrop-blur-sm"
-              style={{
-                background: "rgba(18,24,38,.72)",
-                paddingTop: "max(env(safe-area-inset-top), 12px)",
-              }}
+              className="sticky top-0 z-10 p-4 border-b border-[var(--border)] backdrop-blur-sm"
+              style={{ background: "rgba(18,24,38,.72)", paddingTop: "max(env(safe-area-inset-top), 12px)" }}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3 min-w-0">
-                  <div className="logo-wrap">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  {/* LOGO 80×80 */}
+                  <div
+                    className="relative shrink-0 overflow-hidden rounded-[20px] border border-[var(--border)] bg-[rgba(255,255,255,.03)]"
+                    style={{ width: 80, height: 80 }}
+                    aria-hidden
+                  >
                     {supplier.logoUrl ? (
-                      <img className="logo-img" src={supplier.logoUrl} alt={supplier.displayName} loading="lazy" decoding="async" />
+                      <img
+                        className="h-full w-full object-contain p-2.5"
+                        src={supplier.logoUrl}
+                        alt={supplier.displayName}
+                        loading="lazy"
+                        decoding="async"
+                      />
                     ) : (
-                      <div className="avatar">{initials(supplier.displayName)}</div>
+                      <div className="h-full w-full grid place-items-center text-sm font-semibold">
+                        {initials(supplier.displayName)}
+                      </div>
                     )}
+                    <span className="pointer-events-none absolute inset-0 rounded-[20px] ring-1 ring-[rgba(54,209,204,.18)]" />
                   </div>
+
+                  {/* TEXT */}
                   <div className="min-w-0">
-                    <h2 className="text-base font-semibold truncate">{supplier.displayName}</h2>
-                    <div className="text-xs truncate" style={{ color: "var(--muted)" }}>
+                    <h2 className="truncate text-[16px] leading-[1.25] font-semibold">{supplier.displayName}</h2>
+                    <div className="truncate text-[12px] leading-[1.25]" style={{ color: "var(--muted)" }}>
                       {[supplier.city, (supplier.regions || []).join(", ")].filter(Boolean).join(" • ")}
                     </div>
                     <div className="mt-2 flex flex-wrap gap-1">
@@ -241,7 +238,6 @@ function Badge({ ok, label, green }: { ok: boolean; label: string; green?: boole
   if (green) return <span className={`pill ${ok ? "pill-verified" : ""}`}>{label}{!ok && " — нет"}</span>;
   return <span className="pill">{label}{!ok && " — нет"}</span>;
 }
-
 function tryRub(n?: number) {
   if (typeof n !== "number") return "";
   try { return n.toLocaleString("ru-RU"); } catch { return String(n); }

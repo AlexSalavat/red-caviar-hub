@@ -4,15 +4,14 @@ import listingsJson from "../mocks/listings.json";
 import type { Supplier, Listing } from "../types";
 import SupplierCard from "../widgets/SupplierCard";
 import SupplierProfileSheet from "../widgets/SupplierProfileSheet";
-import { SupplierCardSkeleton } from "../widgets/Skeletons";
-import { useReady } from "../lib/useReady";
 
-const norm = (s:string)=> (s||"").toLowerCase().normalize("NFKD").replace(/\s+/g," ").trim();
+const norm = (s: string) =>
+  (s || "").toLowerCase().normalize("NFKD").replace(/\s+/g, " ").trim();
 
-export default function Catalog(){
+export default function Catalog() {
   const suppliers: Supplier[] = useMemo(() => {
     const arr = Array.isArray(suppliersJson) ? suppliersJson : [];
-    return (arr.filter(Boolean) as Supplier[]).map(s => ({
+    return (arr.filter(Boolean) as Supplier[]).map((s) => ({
       ...s,
       regions: s.regions || [],
       categories: s.categories || [],
@@ -23,23 +22,44 @@ export default function Catalog(){
     }));
   }, []);
 
-  const listings: Listing[] = useMemo(() => (Array.isArray(listingsJson) ? listingsJson : []).filter(Boolean) as Listing[], []);
+  const listings: Listing[] = useMemo(
+    () =>
+      (Array.isArray(listingsJson) ? listingsJson : []).filter(
+        Boolean
+      ) as Listing[],
+    []
+  );
+
   const [q, setQ] = useState("");
   const [sheetId, setSheetId] = useState<string | null>(null);
-  const ready = useReady(320);
 
   const filtered = useMemo(() => {
     const nq = norm(q);
-    if(!nq) return suppliers;
-    return suppliers.filter(s => {
-      const hay = [s.displayName, s.city, (s.regions||[]).join(" "), (s.categories||[]).join(" "), (s.products||[]).join(" ")]
-        .filter(Boolean).map(norm).join(" ");
+    if (!nq) return suppliers;
+
+    return suppliers.filter((s) => {
+      // Жёстко приводим к строкам и формируем string[]
+      const hayParts: string[] = [
+        s.displayName ?? "",
+        s.city ?? "",
+        ...(s.regions ?? []),
+        ...(s.categories ?? []),
+        ...(s.products ?? []),
+      ];
+
+      const hay = hayParts
+        .filter((x) => x && x.trim().length > 0)
+        .map((x) => norm(String(x)))
+        .join(" ");
+
       return hay.includes(nq);
     });
   }, [q, suppliers]);
 
-  const supplierSel = useMemo(() => suppliers.find(s=>s.id===sheetId) || null, [sheetId, suppliers]);
-  const listingsForSel = useMemo(() => listings.filter(l=>l.supplierId===sheetId), [listings, sheetId]);
+  const supplierSel =
+    useMemo(() => suppliers.find((s) => s.id === sheetId) || null, [sheetId, suppliers]);
+  const listingsForSel =
+    useMemo(() => listings.filter((l) => l.supplierId === sheetId), [listings, sheetId]);
 
   return (
     <>
@@ -51,33 +71,31 @@ export default function Catalog(){
             className="input-neon w-full"
             placeholder="Поиск по названию, городу, регионам или продукции…"
             value={q}
-            onChange={e=>setQ(e.target.value)}
+            onChange={(e) => setQ(e.target.value)}
           />
-          <div className="mt-2 text-xs" style={{color:"var(--muted)"}}>
+          <div className="mt-2 text-xs" style={{ color: "var(--muted)" }}>
             Найдено: {filtered.length} из {suppliers.length}
           </div>
         </div>
 
-        {!ready ? (
-          <div className="grid grid-cols-1 gap-3">
-            {Array.from({length:6}).map((_,i)=><SupplierCardSkeleton key={i}/>)}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-3">
-            {filtered.length===0 && <div className="text-sm" style={{color:"var(--muted)"}}>Ничего не найдено.</div>}
-            {filtered.map(s => (
-              <SupplierCard key={s.id} s={s} onOpenSheet={()=>setSheetId(s.id)} />
-            ))}
-          </div>
-        )}
+        <div className="grid grid-cols-1 gap-3">
+          {filtered.length === 0 && (
+            <div className="text-sm" style={{ color: "var(--muted)" }}>
+              Ничего не найдено.
+            </div>
+          )}
+          {filtered.map((s) => (
+            <SupplierCard key={s.id} s={s} onOpenSheet={() => setSheetId(s.id)} />
+          ))}
+        </div>
       </div>
 
-      {/* Шит профиля */}
+      {/* Sheet профиля */}
       <SupplierProfileSheet
         open={!!sheetId}
         supplier={supplierSel}
         listings={listingsForSel}
-        onClose={()=>setSheetId(null)}
+        onClose={() => setSheetId(null)}
       />
     </>
   );
