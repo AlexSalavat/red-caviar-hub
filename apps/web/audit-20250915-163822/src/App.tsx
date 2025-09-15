@@ -2,7 +2,6 @@ import { useEffect, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import BottomNav from "./widgets/BottomNav";
 import ErrorBoundary from "./widgets/ErrorBoundary";
-import A2HSPrompt from "./widgets/A2HSPrompt";
 import { TMA } from "./lib/tma";
 
 /** Ленивые страницы (чанки) */
@@ -13,7 +12,7 @@ const Manufacturers = lazy(() => import("./pages/Manufacturers"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Supplier = lazy(() => import("./pages/Supplier"));
 
-/** Скелетон для загрузки чанков */
+/** Скелетон на время загрузки чанка */
 function PageFallback() {
   return (
     <div className="py-10">
@@ -34,13 +33,12 @@ function Layout() {
       <div className="container-safe mx-auto px-3 pb-4 pt-3">
         <Outlet />
       </div>
-      <A2HSPrompt />
       <BottomNav />
     </div>
   );
 }
 
-/** Прелоад чанков на простое */
+/** Тихий прелоад основных страниц на простое */
 function PrefetchOnIdle() {
   useEffect(() => {
     const preload = () => {

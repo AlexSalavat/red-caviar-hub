@@ -1,92 +1,39 @@
-import React from "react";
-import type { Supplier, Listing } from "../types";
+import type { Supplier } from "../types";
+import { Link, useNavigate } from "react-router-dom";
 
-const cn = (...xs: (string | false | null | undefined)[]) => xs.filter(Boolean).join(" ");
-
-export type SupplierCardProps = {
-  supplier: Supplier;
-  listings?: Listing[];
-  onOpenProfile?: (supplier: Supplier) => void;
-  onOpenListings?: (supplier: Supplier) => void;
-  isFavorite?: boolean;
-  onToggleFavorite?: (supplierId: string) => void;
-};
-
-function productTagsFromSupplier(s: Supplier): string[] {
-  const tags = (s.categories && s.categories.length ? s.categories : s.products) ?? [];
-  return [...new Set(tags)].slice(0, 3);
+function initials(name: string){
+  return (name || "")
+    .split(/\s+/).filter(Boolean).slice(0,2)
+    .map(w => w[0]?.toUpperCase() || "").join("") || "RK";
 }
 
-export default function SupplierCard({
-  supplier,
-  listings = [],
-  onOpenProfile,
-  onOpenListings,
-  isFavorite,
-  onToggleFavorite,
-}: SupplierCardProps) {
-  const announcementsCount = React.useMemo(
-    () => (listings ?? []).filter(l => l && l.supplierId === supplier.id).length,
-    [listings, supplier.id]
-  );
-
-  const tags = productTagsFromSupplier(supplier);
-  const isPremium = (supplier.badges || []).some(b => ["premium","top","vip"].includes(b.toLowerCase()));
+export default function SupplierCard({ s, onOpenSheet }: { s: Supplier; onOpenSheet?: (s: Supplier)=>void }) {
+  const nav = useNavigate();
+  const open = () => onOpenSheet ? onOpenSheet(s) : nav(`/supplier/${s.id}`);
 
   return (
-    <div className="glass neon spot p-5 rounded-3xl hover-raise group">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="h-12 w-12 rounded-xl overflow-hidden border border-white/10 bg-white/5 grid place-items-center group-hover:scale-105 transition">
-          {supplier.logoUrl ? (
-            <img src={supplier.logoUrl} alt={supplier.displayName} className="h-full w-full object-cover" />
-          ) : (
-            <span className="text-sm font-bold text-white/80">{supplier.displayName.slice(0,2).toUpperCase()}</span>
-          )}
+    <article className="glass glass-neon card transition">
+      <div className="grid grid-cols-[auto,1fr,auto] items-center gap-3">
+        <div className="logo-wrap">
+          {s.logoUrl
+            ? <img className="logo-img" src={s.logoUrl} alt={s.displayName} loading="lazy" decoding="async" referrerPolicy="no-referrer" />
+            : <div className="avatar">{initials(s.displayName)}</div>}
         </div>
 
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h3 className="text-white font-semibold leading-tight truncate">{supplier.displayName}</h3>
-            {supplier.verified && <span className="pill pill-verified">Проверенный</span>}
-            {isPremium && <span className="pill pill-premium">PREMIUM</span>}
-          </div>
-          <div className="text-[12px] text-white/60 mt-0.5 truncate">
-            {supplier.city ? `${supplier.city}, ` : ''}{supplier.regions.join(", ")}
+        <div className="min-w-0">
+          <h3 className="title truncate">{s.displayName}</h3>
+          <div className="meta truncate">{[s.city, (s.regions||[]).join(", ")].filter(Boolean).join(" • ")}</div>
+          <div className="mt-1 flex flex-wrap gap-1">
+            {s.verified && <span className="pill pill-verified">Проверенный</span>}
+            {(s.categories||[]).slice(0,2).map(c => <span key={c} className="pill">{c}</span>)}
           </div>
         </div>
 
-        <button
-          onClick={() => onToggleFavorite?.(supplier.id)}
-          className={cn(
-            "h-9 w-9 grid place-items-center rounded-full border border-white/15 transition",
-            isFavorite ? "bg-white/20 text-white" : "bg-transparent text-white/80 hover:bg-white/10"
-          )}
-          aria-label={isFavorite ? "Убрать из избранного" : "В избранное"}
-          title={isFavorite ? "Убрать из избранного" : "В избранное"}
-        >
-          {isFavorite ? "★" : "☆"}
-        </button>
-      </div>
-
-      {/* Категории */}
-      {!!tags.length && (
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          {tags.map((t) => (
-            <span key={t} className="tag-dark">{t}</span>
-          ))}
+        <div className="flex flex-col gap-2">
+          <button onClick={open} className="btn px-3 py-1.5 text-[12px]">Подробнее</button>
+          <Link to={`/listings?supplier=${s.id}`} className="btn px-3 py-1.5 text-[12px]">Объявления</Link>
         </div>
-      )}
-
-      {/* CTA */}
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        <button onClick={() => onOpenProfile?.(supplier)} className="btn btn-solid" title="Открыть профиль компании">
-          Профиль
-        </button>
-        <button onClick={() => onOpenListings?.(supplier)} className="btn btn-ghost" title="Показать все объявления">
-          Объявления ({announcementsCount})
-        </button>
       </div>
-    </div>
+    </article>
   );
 }

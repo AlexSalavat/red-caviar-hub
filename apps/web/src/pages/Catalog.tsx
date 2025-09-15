@@ -1,101 +1,84 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import type { Supplier, Listing } from "../types";
+import { useMemo, useState } from "react";
 import suppliersJson from "../mocks/suppliers.json";
 import listingsJson from "../mocks/listings.json";
+import type { Supplier, Listing } from "../types";
 import SupplierCard from "../widgets/SupplierCard";
-import { SupplierProfileSheet } from "../widgets/SupplierProfileSheet";
+import SupplierProfileSheet from "../widgets/SupplierProfileSheet";
+import { SupplierCardSkeleton } from "../widgets/Skeletons";
+import { useReady } from "../lib/useReady";
 
-const suppliers = (suppliersJson as unknown as Supplier[]) || [];
-const listingsAll = (listingsJson as unknown as Listing[]) || [];
+const norm = (s:string)=> (s||"").toLowerCase().normalize("NFKD").replace(/\s+/g," ").trim();
 
-const normalize = (s: string) => s.normalize("NFKC").toLowerCase();
+export default function Catalog(){
+  const suppliers: Supplier[] = useMemo(() => {
+    const arr = Array.isArray(suppliersJson) ? suppliersJson : [];
+    return (arr.filter(Boolean) as Supplier[]).map(s => ({
+      ...s,
+      regions: s.regions || [],
+      categories: s.categories || [],
+      products: s.products || [],
+      gallery: s.gallery || [],
+      contacts: s.contacts || {},
+      docs: s.docs || {},
+    }));
+  }, []);
 
-export default function Catalog() {
-  const nav = useNavigate();
-  const [q, setQ] = React.useState("");
-  const [active, setActive] = React.useState<Supplier | null>(null);
-  const [open, setOpen] = React.useState(false);
+  const listings: Listing[] = useMemo(() => (Array.isArray(listingsJson) ? listingsJson : []).filter(Boolean) as Listing[], []);
+  const [q, setQ] = useState("");
+  const [sheetId, setSheetId] = useState<string | null>(null);
+  const ready = useReady(320);
 
-  const filtered = React.useMemo(() => {
-    if (!q.trim()) return suppliers;
-    const needle = normalize(q.trim());
-    return suppliers.filter((s) => {
-      const hay = [
-        s.displayName,
-        s.city || "",
-        (s.regions || []).join(" "),
-        (s.categories || []).join(" "),
-        (s.products || []).join(" "),
-      ]
-        .filter(Boolean)
-        .map(normalize)
-        .join(" ");
-      return hay.includes(needle);
+  const filtered = useMemo(() => {
+    const nq = norm(q);
+    if(!nq) return suppliers;
+    return suppliers.filter(s => {
+      const hay = [s.displayName, s.city, (s.regions||[]).join(" "), (s.categories||[]).join(" "), (s.products||[]).join(" ")]
+        .filter(Boolean).map(norm).join(" ");
+      return hay.includes(nq);
     });
-  }, [q]);
+  }, [q, suppliers]);
 
-  const onOpenProfile = (s: Supplier) => {
-    setActive(s);
-    setOpen(true);
-  };
-
-  const onOpenListings = (s: Supplier) => {
-    nav(`/listings?supplierId=${encodeURIComponent(s.id)}`);
-  };
+  const supplierSel = useMemo(() => suppliers.find(s=>s.id===sheetId) || null, [sheetId, suppliers]);
+  const listingsForSel = useMemo(() => listings.filter(l=>l.supplierId===sheetId), [listings, sheetId]);
 
   return (
-    <div className="min-h-screen bg-page-dark">
-      <div className="container-safe py-4 space-y-4">
+    <>
+      <div className="space-y-4">
+        <h1 className="text-xl font-semibold">Каталог поставщиков</h1>
 
-        {/* Поиск */}
-        <div className="glass neon rounded-3xl p-3">
-          <div className="flex items-center gap-3">
-            <div className="shrink-0 h-9 w-9 rounded-xl border border-white/10 bg-white/5 grid place-items-center">
-              🔎
-            </div>
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Поиск по названию, городу, регионам или продукции…"
-              className="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-base placeholder:text-white/40 text-white outline-none focus:ring-2 focus:ring-white/20"
-            />
-            {q && (
-              <button onClick={() => setQ("")} className="btn btn-muted px-3">
-                Сброс
-              </button>
-            )}
-          </div>
-          <div className="mt-2 text-[12px] text-white/60">
+        <div className="glass p-2 rounded-2xl border border-[var(--border)]">
+          <input
+            className="input-neon w-full"
+            placeholder="Поиск по названию, городу, регионам или продукции…"
+            value={q}
+            onChange={e=>setQ(e.target.value)}
+          />
+          <div className="mt-2 text-xs" style={{color:"var(--muted)"}}>
             Найдено: {filtered.length} из {suppliers.length}
           </div>
         </div>
 
-        {/* Грид компаний */}
-        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-          {filtered.map((s) => (
-            <SupplierCard
-              key={s.id}
-              supplier={s}
-              listings={listingsAll}
-              onOpenProfile={onOpenProfile}
-              onOpenListings={onOpenListings}
-            />
-          ))}
-          {filtered.length === 0 && (
-            <div className="text-white/70">Нет поставщиков по запросу.</div>
-          )}
-        </div>
+        {!ready ? (
+          <div className="grid grid-cols-1 gap-3">
+            {Array.from({length:6}).map((_,i)=><SupplierCardSkeleton key={i}/>)}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3">
+            {filtered.length===0 && <div className="text-sm" style={{color:"var(--muted)"}}>Ничего не найдено.</div>}
+            {filtered.map(s => (
+              <SupplierCard key={s.id} s={s} onOpenSheet={()=>setSheetId(s.id)} />
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Профиль (sheet) */}
+      {/* Шит профиля */}
       <SupplierProfileSheet
-        open={open}
-        onClose={() => setOpen(false)}
-        supplier={active}
-        allListings={listingsAll}
-        onOpenListings={onOpenListings}
+        open={!!sheetId}
+        supplier={supplierSel}
+        listings={listingsForSel}
+        onClose={()=>setSheetId(null)}
       />
-    </div>
+    </>
   );
 }

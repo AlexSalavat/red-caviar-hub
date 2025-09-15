@@ -1,26 +1,26 @@
 [
   {
     "id": "sup1",
-    "displayName": "Рыбный край",
-    "logoUrl": "https://placehold.co/64x64?text=RK",
-    "regions": ["Москва"],
+    "displayName": "Рыбный край Москва",
+    "logoUrl": "/gallery/rkm-logo.svg",
+    "regions": ["Москва", "РФ"],
     "city": "Москва",
     "verified": true,
-    "rating": 4.6,
-    "badges": ["new"],
+    "rating": 4.8,
+    "badges": ["top", "new_batch"],
     "categories": ["Красная икра", "Рыба/морепродукты"],
-    "about": "Оптовые и розничные продажи свежемороженой рыбы, красной икры и морепродуктов от производителей. Собственные холодильные мощности в Москве, прямые поставки с Дальнего Востока, контроль качества каждой поставки и быстрая логистика по РФ.",
+    "about": "Оптовые и розничные продажи свежемороженой рыбы, красной икры и морепродуктов от производителей. Работаем по стандартам холодовой цепи, быстрые поставки по РФ, поддержка HoReCa.",
     "warehouseAddress": "Филёвский бул., 10, Москва",
     "contacts": {
       "phone": "+7 (991) 616-89-16",
+      "whatsapp": "+7 (968) 028-00-33",
       "tg": "https://t.me/+ZO8m6CCYsfw1MGYy",
-      "whatsapp": "+7 (968) 028-00-33"
+      "email": ""
     },
-    "gallery": [],
-    "priceList": null,
+    "gallery": ["/gallery/ikra-1.svg", "/gallery/ikra-2.svg", "/gallery/ikra-3.svg"],
     "docs": {
-      "mercury": { "status": "linked" },
-      "chestnyZnak": { "status": "linked" }
+      "mercury": { "status": "linked", "orgId": "RU-MOS-001" },
+      "chestnyZnak": { "status": "linked", "companyId": "RU-CZ-001" }
     }
   }
 ]

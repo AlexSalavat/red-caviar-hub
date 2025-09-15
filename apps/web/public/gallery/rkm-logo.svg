@@ -1,0 +1,9 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="n" x1="0" x2="1"><stop offset="0" stop-color="#65D0FF"/><stop offset="1" stop-color="#6AA6FF"/></linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="42" fill="#0E1624"/>
+  <circle cx="128" cy="128" r="86" fill="none" stroke="url(#n)" stroke-width="4"/>
+  <text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle" font-family="ui-sans-serif, system-ui" font-size="42" fill="#E8F3FF">РК</text>
+  <text x="50%" y="74%" text-anchor="middle" dominant-baseline="middle" font-family="ui-sans-serif, system-ui" font-size="18" fill="#9EB5D8">Москва</text>
+</svg>

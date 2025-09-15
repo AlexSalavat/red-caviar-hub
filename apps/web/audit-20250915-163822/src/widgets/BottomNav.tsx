@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const Icons = {
   catalog: (
@@ -30,47 +30,55 @@ const Icons = {
 };
 
 const NAV = [
-  { to: "/catalog",        label: "Каталог",        icon: Icons.catalog },
-  { to: "/listings",       label: "Объявления",     icon: Icons.listings },
-  { to: "/manufacturers",  label: "Производители",  icon: Icons.manufacturers },
-  { to: "/profile",        label: "Профиль",        icon: Icons.profile },
+  { to: "/catalog", label: "Каталог", icon: Icons.catalog },
+  { to: "/listings", label: "Объявления", icon: Icons.listings },
+  { to: "/manufacturers", label: "Производители", icon: Icons.manufacturers },
+  { to: "/profile", label: "Профиль", icon: Icons.profile },
 ];
 
 export default function BottomNav() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const [indicator, setIndicator] = useState({ left: 0, width: 0 });
 
-  // Определяем активный пункт по pathname.
-  const activeIndex = useMemo(() => {
-    // На сплэше "/" — индикатор скрываем (нет активной вкладки).
-    if (pathname === "/") return -1;
-    const i = NAV.findIndex(
-      n => pathname === n.to || pathname.startsWith(n.to + "/")
-    );
+  const active = useMemo(() => {
+    const i = NAV.findIndex(n => pathname === n.to || pathname.startsWith(n.to + "/"));
     return i >= 0 ? i : 0;
   }, [pathname]);
+
+  function recalc() {
+    const wrap = wrapRef.current, el = itemRefs.current[active];
+    if (!wrap || !el) return;
+    const w = wrap.getBoundingClientRect(), r = el.getBoundingClientRect();
+    setIndicator({ left: Math.round(r.left - w.left), width: Math.round(r.width) });
+  }
+
+  useLayoutEffect(() => { const id = requestAnimationFrame(recalc); return () => cancelAnimationFrame(id); }, [active]);
+  useEffect(() => {
+    const ro = new ResizeObserver(recalc);
+    if (wrapRef.current) ro.observe(wrapRef.current);
+    const on = () => recalc();
+    window.addEventListener("resize", on);
+    window.addEventListener("orientationchange", on);
+    return () => { ro.disconnect(); window.removeEventListener("resize", on); window.removeEventListener("orientationchange", on); };
+  }, []);
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 pointer-events-auto">
       <div className="bottom-nav backdrop-blur-md">
-        <div className="relative grid grid-cols-4">
-          {/* Индикатор — фиксированная геометрия: 25% ширины на пункт */}
-          <span
-            className="nav-indicator"
-            style={{
-              width: "calc(100% / 4)",
-              left: activeIndex >= 0 ? `calc((100% / 4) * ${activeIndex})` : "-100%",
-            }}
-            aria-hidden
-          />
+        <div ref={wrapRef} className="relative grid grid-cols-4">
+          <span className="nav-indicator" style={{ left: `${indicator.left}px`, width: `${indicator.width}px` }} aria-hidden />
           {NAV.map((it, i) => {
-            const isActive = activeIndex === i;
+            const isActive = active === i;
             return (
               <button
                 key={it.to}
+                ref={el => (itemRefs.current[i] = el)}
                 className="relative h-[var(--bottom-nav-h)] px-2 text-[11px] font-medium text-[var(--ink)]/80 hover:text-[var(--ink)] transition-colors"
-                aria-current={isActive ? "page" : undefined}
                 onClick={() => navigate(it.to)}
+                aria-current={isActive ? "page" : undefined}
               >
                 <div className="mx-auto flex h-full w-full max-w-[160px] flex-col items-center justify-center gap-1">
                   <span
@@ -80,10 +88,7 @@ export default function BottomNav() {
                   >
                     {it.icon}
                   </span>
-                  <span
-                    className="truncate"
-                    style={{ textShadow: isActive ? "0 0 10px rgba(54,209,204,.35)" : "none" }}
-                  >
+                  <span className="truncate" style={{ textShadow: isActive ? "0 0 10px rgba(54,209,204,.35)" : "none" }}>
                     {it.label}
                   </span>
                 </div>

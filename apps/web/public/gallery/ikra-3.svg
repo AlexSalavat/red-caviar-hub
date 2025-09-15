@@ -1,0 +1,16 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <defs>
+    <linearGradient id="g3" x1="0" x2="1">
+      <stop offset="0" stop-color="#0E1624"/><stop offset="1" stop-color="#1A2A4A"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0" x2="1">
+      <stop offset="0" stop-color="#65D0FF"/><stop offset="1" stop-color="#6AA6FF"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#g3)"/>
+  <g transform="translate(100,120)">
+    <rect x="0" y="0" width="600" height="320" rx="28" fill="#0F1B2E" stroke="#1C2E4F"/>
+    <rect x="20" y="20" width="560" height="280" rx="22" fill="none" stroke="url(#glow)" opacity=".4"/>
+    <text x="40" y="170" fill="#E6EEF9" font-size="44" font-family="ui-sans-serif, system-ui">Морепродукты</text>
+  </g>
+</svg>

@@ -1,0 +1,12 @@
+{
+  "name": "Red Caviar Hub",
+  "short_name": "Caviar Hub",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0A0F1A",
+  "theme_color": "#0F172A",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "64x64", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/logo-mark.svg", "sizes": "128x128", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

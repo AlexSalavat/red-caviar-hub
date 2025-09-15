@@ -1,0 +1,8 @@
+﻿.\public\favicon.svg
+.\public\logo-mark.svg
+.\public\promo.mp4
+.\public\vite.svg
+.\public\gallery\ikra-1.svg
+.\public\gallery\ikra-2.svg
+.\public\gallery\ikra-3.svg
+.\public\gallery\rkm-logo.svg

@@ -1,0 +1,4 @@
+﻿node: v22.15.0
+pnpm: 10.15.1
+cwd: C:\Users\Lenovo\OneDrive\Desktop\red-caviar-hub\apps\web
+

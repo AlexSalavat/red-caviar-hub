@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Нет соединения — Red Caviar Hub</title>
+    <style>
+      :root{
+        --teal:#36D1CC; --teal-soft:rgba(54,209,204,.18);
+        --ink:#ECEEF4; --muted:#A3A8B3;
+        --bg1:#0B101A; --bg2:#0A0F1A;
+        --border:rgba(255,255,255,.10); --border-strong:rgba(255,255,255,.18);
+        --shadow:rgba(0,0,0,.48);
+      }
+      html,body{height:100%} body{
+        margin:0; color:var(--ink);
+        background:
+          radial-gradient(1200px 640px at 80% -10%, rgba(54,209,204,.08), transparent 62%),
+          radial-gradient(900px 520px at 0% 100%, rgba(54,209,204,.05), transparent 62%),
+          linear-gradient(180deg,var(--bg1) 0%, var(--bg2) 100%);
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+        display:grid; place-items:center;
+      }
+      .card{
+        width:min(520px, 92vw);
+        background:#121826cc; backdrop-filter: blur(16px);
+        border:1px solid var(--border); border-radius:18px;
+        box-shadow:0 1px 0 rgba(255,255,255,.04) inset, 0 12px 28px var(--shadow), 0 0 18px var(--teal-soft), 0 0 0 1px var(--teal-soft) inset;
+        padding:24px; text-align:center;
+      }
+      .row{margin:10px 0; color:var(--muted); font-size:14px}
+      .btn{
+        display:inline-flex; align-items:center; justify-content:center;
+        padding:12px 16px; border-radius:16px; border:1px solid var(--border);
+        background:rgba(255,255,255,.02); color:var(--ink);
+        text-decoration:none; cursor:pointer;
+      }
+      .btn:hover{ box-shadow:0 0 0 1px var(--teal-soft) inset, 0 0 14px var(--teal-soft); border-color:var(--border-strong) }
+      img{ height:80px; width:80px; display:block; margin:0 auto 12px; }
+      small{ display:block; margin-top:8px; color:var(--muted); }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <img src="/logo-mark.svg" alt="Red Caviar Hub" />
+      <h1 style="margin:6px 0 4px; font-size:22px">Нет соединения</h1>
+      <div class="row">Проверьте сеть и попробуйте снова.</div>
+      <button class="btn" onclick="location.reload()">Повторить</button>
+      <small>Оффлайн-режим активирован сервис-воркером</small>
+    </main>
+  </body>
+</html>

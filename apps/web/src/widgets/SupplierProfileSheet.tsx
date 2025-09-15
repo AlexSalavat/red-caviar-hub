@@ -1,315 +1,227 @@
-import React from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Supplier, Listing } from "../types";
 
-/* ───────── helpers ───────── */
-const uniq = <T,>(xs: T[]) => Array.from(new Set(xs)).filter(Boolean) as T[];
-const Pill: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <span className="pill pill-verified">{children}</span>
-);
-
-function DocStatus({ s }: { s: Supplier }) {
-  const hasMercury = !!(s.docs?.mercury && (s.docs.mercury.status === "linked" || s.docs.mercury.orgId));
-  const hasCZ = !!(s.docs?.chestnyZnak && (s.docs.chestnyZnak.status === "linked" || s.docs.chestnyZnak.companyId));
-  if (!hasMercury && !hasCZ && !s.verified) return null;
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      {hasMercury && <Pill>Меркурий</Pill>}
-      {hasCZ && <Pill>Честный знак</Pill>}
-      {s.verified && <Pill>Проверено</Pill>}
-    </div>
-  );
-}
-const waLink = (raw?: string) => {
-  if (!raw) return null;
-  const cleaned = raw.trim().replace(/[^\d+]/g, "");
-  const digits = cleaned.startsWith("+") ? cleaned.slice(1) : cleaned;
-  return digits ? `https://wa.me/${digits}` : null;
-};
-
-/* ───────── props ───────── */
-export type SupplierProfileSheetProps = {
-  open: boolean;
-  onClose: () => void;
-  supplier: Supplier | null;
-  allListings: Listing[];
-  onRevealContact?: (supplier: Supplier) => void | Promise<void>;
-  onOpenListings?: (supplier: Supplier) => void;
-};
-
-export function SupplierProfileSheet({
+/** Премиум-шит профиля поставщика.
+ * Микроанимации на CSS, без framer-motion.
+ */
+export default function SupplierProfileSheet({
   open,
-  onClose,
   supplier,
-  allListings,
-  onRevealContact,
-  onOpenListings,
-}: SupplierProfileSheetProps) {
-  /* ХУКИ — ВСЕГДА ВЫЗЫВАЕМ (не зависят от условий) */
-  const [contactsOpen, setContactsOpen] = React.useState(false);
-  React.useEffect(() => { if (open) setContactsOpen(false); }, [open]);
+  listings = [],
+  onClose,
+}: {
+  open: boolean;
+  supplier: Supplier | null;
+  listings?: Listing[];
+  onClose: () => void;
+}) {
+  const [showContacts, setShowContacts] = useState(false);
+  useEffect(() => { setShowContacts(false); }, [open, supplier?.id]);
 
-  // Всё ниже — тоже хуки, вызываем их всегда, а внутри используем безопасные значения
-  const supplierId = supplier?.id ?? ""; // пустой id никогда не совпадёт
-  const listings = React.useMemo(() => {
-    return (allListings || [])
-      .filter((l) => l && l.supplierId === supplierId)
-      .sort((a, b) => +(new Date(b.createdAt ?? 0)) - +(new Date(a.createdAt ?? 0)));
-  }, [allListings, supplierId]);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
 
-  const gallery: string[] = React.useMemo(() => {
-    const pics = supplier?.gallery?.length ? supplier.gallery! : listings.flatMap((l) => l.photos || []);
-    return pics.slice(0, 12);
-  }, [supplier?.gallery, listings]);
+  const docs = supplier?.docs || {};
+  const hasMercury = docs?.mercury?.status === "linked";
+  const hasCZ = docs?.chestnyZnak?.status === "linked";
+  const verified = !!supplier?.verified;
 
-  const productTags = React.useMemo(() => {
-    const base = supplier?.categories?.length ? supplier!.categories! : (supplier?.products ?? []);
-    return uniq<string>(base.map((t) => (t || "").trim())).slice(0, 8);
-  }, [supplier?.categories, supplier?.products]);
+  const gallery = useMemo(() => {
+    if (!supplier) return [];
+    const g = supplier.gallery && supplier.gallery.length ? supplier.gallery : [];
+    const fromListings = listings
+      .filter(l => l.supplierId === supplier.id)
+      .flatMap(l => l.photos || []);
+    return (g.length ? g : fromListings).slice(0, 20);
+  }, [supplier, listings]);
 
-  const pdfUrl: string | null = React.useMemo(() => {
-    const pl = supplier?.priceList;
-    return pl && pl.type === "pdf" ? pl.url : null;
-  }, [supplier?.priceList]);
+  const last3 = useMemo(() => {
+    if (!supplier) return [];
+    return listings
+      .filter(l => l.supplierId === supplier.id)
+      .sort((a,b)=>(b.createdAt?+new Date(b.createdAt):0)-(a.createdAt?+new Date(a.createdAt):0))
+      .slice(0,3);
+  }, [supplier, listings]);
 
-  const reveal = React.useCallback(async () => {
-    if (!supplier) return;
-    if (onRevealContact) await Promise.resolve(onRevealContact(supplier));
-    setContactsOpen(true);
-  }, [onRevealContact, supplier]);
-
-  const contactNow = React.useCallback(async () => {
-    if (!supplier) return;
-    const tg = supplier.contacts?.tg;
-    const wa = waLink(supplier.contacts?.whatsapp);
-    if (tg) {
-      const href = tg.startsWith("http")
-        ? tg
-        : tg.startsWith("@")
-        ? `https://t.me/${tg.slice(1)}`
-        : `https://t.me/${tg}`;
-      window.open(href, "_blank");
-      return;
-    }
-    if (wa) { window.open(wa, "_blank"); return; }
-    await reveal();
-  }, [supplier, reveal]);
-
-  /* Если шит закрыт ИЛИ supplier ещё не выбран — просто ничего не рисуем,
-     но ХУКИ выше уже вызвались и порядок стабильный. */
   if (!open || !supplier) return null;
 
-  /* ───────── UI ───────── */
   return (
-    <div className={"fixed inset-0 z-50 " + (open ? "pointer-events-auto" : "pointer-events-none")}>
-      {/* backdrop */}
-      <div
+    <div className="fixed inset-0 z-[60]">
+      {/* overlay */}
+      <button
+        className="absolute inset-0 bg-black/50 opacity-0 transition-opacity duration-200 data-[show=true]:opacity-100"
+        data-show={open}
         onClick={onClose}
-        className={
-          "absolute inset-0 bg-black/70 transition-opacity " + (open ? "opacity-100" : "opacity-0")
-        }
+        aria-label="Закрыть"
       />
-      {/* sheet */}
-      <div className={"absolute bottom-0 left-0 right-0 " + (open ? "sheet-open" : "sheet-enter")}>
-        <div className="glass neon rounded-t-[28px] border-white/10">
-          <div className="pt-3">
-            <div className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-white/20" />
-            <div className="max-h-[90vh] overflow-y-auto px-6 pb-6">
-              {/* Header */}
-              <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-xl bg-white/5 border border-white/10 overflow-hidden grid place-items-center">
+      {/* panel */}
+      <div
+        className="absolute inset-x-0 bottom-0 sm:inset-0 sm:flex sm:items-center sm:justify-center pointer-events-none"
+        aria-hidden
+      >
+        <section
+          className="pointer-events-auto bg-transparent"
+          style={{ width: "100%" }}
+        >
+          <div
+            className="glass glass-neon mx-auto mt-auto sm:mt-0 max-w-[980px] rounded-t-2xl sm:rounded-2xl border border-[var(--border)]
+                       translate-y-4 opacity-0 transition-all duration-220 ease-out data-[show=true]:translate-y-0 data-[show=true]:opacity-100"
+            data-show={open}
+          >
+            {/* шапка */}
+            <header className="p-4 border-b border-[var(--border)] flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3 min-w-0">
+                <div className="logo-wrap">
                   {supplier.logoUrl ? (
-                    <img src={supplier.logoUrl} alt={supplier.displayName} className="h-full w-full object-cover" />
+                    <img className="logo-img" src={supplier.logoUrl} alt={supplier.displayName} loading="lazy" decoding="async" />
                   ) : (
-                    <span className="text-sm font-bold text-white/80">
-                      {supplier.displayName.slice(0, 2).toUpperCase()}
-                    </span>
+                    <div className="avatar">{initials(supplier.displayName)}</div>
                   )}
                 </div>
                 <div className="min-w-0">
-                  <div className="font-semibold text-white truncate">{supplier.displayName}</div>
-                  <div className="text-[12px] text-white/60 truncate">
-                    {supplier.city ? `${supplier.city}, ` : ""}
-                    {supplier.regions.join(", ")}
+                  <h2 className="text-base font-semibold truncate">{supplier.displayName}</h2>
+                  <div className="text-xs truncate" style={{ color: "var(--muted)" }}>
+                    {[supplier.city, (supplier.regions || []).join(", ")].filter(Boolean).join(" • ")}
                   </div>
-                </div>
-                <div className="ml-auto flex gap-2">
-                  <button onClick={contactNow} className="btn btn-solid">Связаться</button>
-                  <button onClick={onClose} className="btn btn-muted">Закрыть</button>
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {hasMercury && <span className="pill">Меркурий</span>}
+                    {hasCZ && <span className="pill">Честный знак</span>}
+                    {verified && <span className="pill pill-verified">Проверено</span>}
+                    {(supplier.categories || []).slice(0, 4).map((c) => <span key={c} className="tag-dark">{c}</span>)}
+                  </div>
                 </div>
               </div>
 
-              {/* Статусы */}
-              <div className="mt-3">
-                <DocStatus s={supplier} />
-              </div>
-
-              {/* Категории / Продукция */}
-              {!!productTags.length && (
-                <section className="mt-4">
-                  <div className="text-xs uppercase tracking-wide text-white/60">Категории / Продукция</div>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {productTags.map((t) => (
-                      <span key={t} className="tag-dark">{t}</span>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {/* О компании */}
-              {supplier.about && (
-                <section className="mt-4 rounded-2xl border border-white/10 p-4 bg-white/[.03]">
-                  <div className="text-sm font-semibold mb-1 text-white">Краткое описание компании</div>
-                  <div className="text-sm text-white/70 whitespace-pre-wrap">{supplier.about}</div>
-                </section>
-              )}
-
-              {/* Прайс */}
-              <section className="mt-4 rounded-2xl border border-white/10 p-4 bg-white/[.03]">
-                <div className="text-sm font-semibold mb-2 text-white">Прайс-лист</div>
-                {pdfUrl ? (
-                  <div className="flex gap-2">
-                    <a href={pdfUrl} target="_blank" rel="noreferrer" className="btn btn-solid">Открыть PDF</a>
-                    <a href={pdfUrl} download className="btn btn-muted">Скачать</a>
-                  </div>
-                ) : (
-                  <div className="text-sm text-white/70">Прайс доступен по запросу.</div>
+              <div className="shrink-0 flex items-center gap-2">
+                {supplier.priceList?.url && (
+                  <a className="btn px-3 py-1.5 text-[12px]" href={supplier.priceList.url} target="_blank" rel="noreferrer">Прайс (PDF)</a>
                 )}
-              </section>
+                <button className="btn px-3 py-1.5 text-[12px]" onClick={onClose}>Закрыть</button>
+              </div>
+            </header>
 
-              {/* Контакты */}
-              {Boolean(
-                supplier.contacts &&
-                  (supplier.contacts.phone ||
-                    supplier.contacts.email ||
-                    supplier.contacts.tg ||
-                    supplier.contacts.whatsapp ||
-                    supplier.contacts.website)
-              ) && (
-                <section className="mt-4">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm font-semibold text-white">Контакты</div>
-                    {!contactsOpen && (
-                      <button onClick={reveal} className="btn btn-muted">Показать</button>
+            {/* тело */}
+            <div className="p-4 grid grid-cols-1 lg:grid-cols-[1fr,320px] gap-4">
+              {/* левая колонка */}
+              <div className="space-y-4">
+                {/* Описание */}
+                {(supplier.about || supplier.warehouseAddress) && (
+                  <div className="glass p-4 rounded-xl border border-[var(--border)]">
+                    {supplier.about && <p className="text-sm leading-relaxed">{supplier.about}</p>}
+                    {supplier.warehouseAddress && (
+                      <p className="text-xs mt-3" style={{ color: "var(--muted)" }}>
+                        Склад: {supplier.warehouseAddress}
+                      </p>
                     )}
                   </div>
-                  {contactsOpen && (
-                    <div className="mt-2 rounded-2xl border border-white/10 divide-y divide-white/10 bg-white/[.03]">
-                      {supplier.contacts?.phone && (
-                        <div className="px-4 py-2 text-sm">
-                          <span className="text-white/60">Тел.: </span>
-                          <a href={`tel:${supplier.contacts.phone}`} className="hover:underline">
-                            {supplier.contacts.phone}
-                          </a>
+                )}
+
+                {/* Документы */}
+                <div className="glass p-4 rounded-xl border border-[var(--border)]">
+                  <div className="text-sm font-semibold mb-3">Документы</div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge ok={hasMercury} label="Меркурий" />
+                    <Badge ok={hasCZ} label="Честный знак" />
+                    <Badge ok={verified} label="Проверено" green />
+                  </div>
+                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs" style={{ color: "var(--muted)" }}>
+                    {docs?.mercury?.orgId && <div>Орг. ID (Меркурий): <span className="opacity-90">{docs.mercury.orgId}</span></div>}
+                    {docs?.chestnyZnak?.companyId && <div>ID компании (ЧЗ): <span className="opacity-90">{docs.chestnyZnak.companyId}</span></div>}
+                  </div>
+                </div>
+
+                {/* Галерея 4×N */}
+                {gallery.length > 0 && (
+                  <div className="glass p-4 rounded-xl border border-[var(--border)]">
+                    <div className="text-sm font-semibold mb-3">Галерея</div>
+                    <div className="grid grid-cols-4 gap-2">
+                      {gallery.map((src, i) => (
+                        <div key={i} className="aspect-square overflow-hidden rounded-lg border border-[var(--border)] bg-[rgba(255,255,255,.03)]">
+                          <img
+                            src={src}
+                            alt={`${supplier.displayName} фото ${i+1}`}
+                            loading="lazy"
+                            decoding="async"
+                            className="h-full w-full object-cover"
+                            referrerPolicy="no-referrer"
+                          />
                         </div>
-                      )}
-                      {supplier.contacts?.whatsapp && (
-                        <div className="px-4 py-2 text-sm">
-                          <span className="text-white/60">WhatsApp: </span>
-                          {(() => {
-                            const link = waLink(supplier.contacts?.whatsapp);
-                            return link ? (
-                              <a href={link} target="_blank" className="hover:underline">
-                                {supplier.contacts!.whatsapp}
-                              </a>
-                            ) : (
-                              supplier.contacts!.whatsapp
-                            );
-                          })()}
-                        </div>
-                      )}
-                      {supplier.contacts?.tg && (
-                        <div className="px-4 py-2 text-sm">
-                          <span className="text-white/60">Telegram: </span>
-                          {supplier.contacts.tg}
-                        </div>
-                      )}
-                      {supplier.contacts?.email && (
-                        <div className="px-4 py-2 text-sm">
-                          <span className="text-white/60">Email: </span>
-                          <a href={`mailto:${supplier.contacts.email}`} className="hover:underline">
-                            {supplier.contacts.email}
-                          </a>
-                        </div>
-                      )}
-                      {supplier.contacts?.website && (
-                        <div className="px-4 py-2 text-sm truncate">
-                          <span className="text-white/60">Сайт: </span>
-                          <a href={supplier.contacts.website} target="_blank" className="hover:underline">
-                            {supplier.contacts.website}
-                          </a>
-                        </div>
-                      )}
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* правая колонка */}
+              <aside className="space-y-4">
+                {/* Контакты */}
+                <div className="glass p-4 rounded-xl border border-[var(--border)]">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-semibold">Контакты</div>
+                    <button className="btn px-3 py-1.5 text-[12px]" onClick={() => setShowContacts(v=>!v)}>
+                      {showContacts ? "Скрыть" : "Показать"}
+                    </button>
+                  </div>
+                  {showContacts && (
+                    <div className="mt-3 grid grid-cols-1 gap-2 text-sm">
+                      {supplier.contacts?.phone   && <div>Телефон: <span className="opacity-90">{supplier.contacts.phone}</span></div>}
+                      {supplier.contacts?.whatsapp&& <div>WhatsApp: <span className="opacity-90">{supplier.contacts.whatsapp}</span></div>}
+                      {supplier.contacts?.tg      && <div>Telegram: <span className="opacity-90">{supplier.contacts.tg}</span></div>}
+                      {supplier.contacts?.email   && <div>Email: <span className="opacity-90">{supplier.contacts.email}</span></div>}
+                      {supplier.contacts?.website && <div>Сайт: <a className="underline opacity-90" href={supplier.contacts.website} target="_blank" rel="noreferrer">перейти</a></div>}
                     </div>
                   )}
-                </section>
-              )}
+                </div>
 
-              {/* Адрес */}
-              {Boolean(supplier.city || supplier.warehouseAddress || supplier.regions.length) && (
-                <section className="mt-4 rounded-2xl border border-white/10 p-4 bg-white/[.03]">
-                  <div className="text-sm font-semibold mb-1 text-white">Адрес</div>
-                  <div className="text-sm text-white/70">
-                    {supplier.city ? <>Город: {supplier.city}<br /></> : null}
-                    {supplier.regions.length ? <>Регионы: {supplier.regions.join(", ")}<br /></> : null}
-                    {supplier.warehouseAddress ? <>Склад: {supplier.warehouseAddress}</> : null}
-                  </div>
-                </section>
-              )}
-
-              {/* Галерея */}
-              {!!gallery.length && (
-                <section className="mt-4">
-                  <div className="text-xs uppercase tracking-wide text-white/60">Галерея фото</div>
-                  <div className="mt-2 grid grid-cols-4 gap-2">
-                    {gallery.map((src, i) => (
-                      <div key={`${src}-${i}`} className="aspect-square overflow-hidden rounded-xl bg-white/10">
-                        <img src={src} alt="gallery" className="h-full w-full object-cover transition group-hover:scale-[1.02]" />
+                {/* Последние объявления */}
+                <div className="glass p-4 rounded-xl border border-[var(--border)]">
+                  <div className="text-sm font-semibold mb-3">Последние объявления</div>
+                  <div className="space-y-2">
+                    {last3.length === 0 && (
+                      <div className="text-xs" style={{ color: "var(--muted)" }}>Пока нет объявлений.</div>
+                    )}
+                    {last3.map((l) => (
+                      <div key={l.id} className="grid grid-cols-[1fr_auto] items-center gap-2 text-sm">
+                        <div className="min-w-0">
+                          <div className="truncate">{l.title}</div>
+                          <div className="text-xs" style={{ color: "var(--muted)" }}>
+                            {l.region} • {l.createdAt ? new Date(l.createdAt).toLocaleDateString("ru-RU") : ""}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-[12px]" style={{ color: "var(--muted)" }}>Цена</div>
+                          <div className="font-semibold">{tryRub(l.pricePerKgRUB)} ₽/кг</div>
+                        </div>
                       </div>
                     ))}
                   </div>
-                </section>
-              )}
-
-              {/* Объявления */}
-              <section className="mt-4">
-                <div className="text-xs uppercase tracking-wide text-white/60">Объявления</div>
-                {listings.length === 0 ? (
-                  <div className="mt-2 text-sm text-white/70">Нет опубликованных объявлений</div>
-                ) : (
-                  <ul className="mt-2 space-y-2">
-                    {listings.slice(0, 3).map((l) => (
-                      <li key={l.id} className="rounded-2xl border border-white/10 p-3 bg-white/[.03]">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="font-medium text-white truncate">{l.title}</div>
-                            <div className="text-xs text-white/60">
-                              {l.region} · {new Date(l.createdAt ?? Date.now()).toLocaleDateString("ru-RU")}
-                            </div>
-                          </div>
-                          <div className="text-right shrink-0">
-                            <div className="font-semibold text-white">
-                              {l.pricePerKgRUB.toLocaleString("ru-RU")} ₽/кг
-                            </div>
-                            <div className="text-xs text-white/60">
-                              Объём: {l.batchVolumeKg.toLocaleString("ru-RU")} кг
-                            </div>
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <div className="mt-3">
-                  <button onClick={() => supplier && onOpenListings?.(supplier)} className="btn btn-solid">
-                    Все объявления
-                  </button>
                 </div>
-              </section>
-
+              </aside>
             </div>
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );
+}
+
+function Badge({ ok, label, green }: { ok: boolean; label: string; green?: boolean }) {
+  if (green) {
+    return <span className={`pill ${ok ? "pill-verified" : ""}`}>{label}{!ok && " — нет"}</span>;
+  }
+  return <span className="pill">{label}{!ok && " — нет"}</span>;
+}
+
+function tryRub(n?: number) {
+  if (typeof n !== "number") return "";
+  try { return n.toLocaleString("ru-RU"); } catch { return String(n); }
+}
+function initials(name?: string) {
+  return (name || "")
+    .split(/\s+/).filter(Boolean).slice(0,2)
+    .map(w => w[0]?.toUpperCase() || "").join("") || "RK";
 }

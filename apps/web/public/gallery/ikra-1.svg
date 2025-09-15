@@ -1,0 +1,36 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <defs>
+    <linearGradient id="g1" x1="0" x2="1">
+      <stop offset="0" stop-color="#0E1624"/><stop offset="1" stop-color="#12223B"/>
+    </linearGradient>
+    <radialGradient id="roe" cx="38%" cy="35%" r="60%">
+      <stop offset="0" stop-color="#FFD4B8"/>
+      <stop offset="0.45" stop-color="#FF8A4D"/>
+      <stop offset="0.82" stop-color="#D7401A"/>
+      <stop offset="1" stop-color="#8F170F"/>
+    </radialGradient>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2.2"/>
+    </filter>
+  </defs>
+  <rect width="800" height="600" fill="url(#g1)"/>
+  <g transform="translate(200,170)">
+    <ellipse cx="220" cy="260" rx="220" ry="50" fill="#FF6B3D" opacity="0.18" filter="url(#soft)"/>
+    <g transform="translate(0,0)">
+      <circle cx="140" cy="180" r="70" fill="url(#roe)"/>
+      <ellipse cx="120" cy="160" rx="24" ry="14" fill="#fff" opacity=".28" filter="url(#soft)"/>
+      <circle cx="124" cy="156" r="6" fill="#fff" opacity=".75"/>
+    </g>
+    <g transform="translate(100,40)">
+      <circle cx="190" cy="210" r="54" fill="url(#roe)"/>
+      <ellipse cx="172" cy="194" rx="20" ry="12" fill="#fff" opacity=".26" filter="url(#soft)"/>
+      <circle cx="176" cy="190" r="5" fill="#fff" opacity=".7"/>
+    </g>
+    <g transform="translate(160,-10)">
+      <circle cx="260" cy="240" r="62" fill="url(#roe)"/>
+      <ellipse cx="242" cy="220" rx="22" ry="13" fill="#fff" opacity=".26" filter="url(#soft)"/>
+      <circle cx="246" cy="216" r="5" fill="#fff" opacity=".72"/>
+    </g>
+  </g>
+  <text x="40" y="560" fill="#A4B4D6" font-family="ui-sans-serif, system-ui" font-size="20">Красная икра  премиум партия</text>
+</svg>

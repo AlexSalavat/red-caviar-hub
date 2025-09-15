@@ -3,21 +3,14 @@ import listingsJson from "../mocks/listings.json";
 import suppliersJson from "../mocks/suppliers.json";
 import type { Listing, Supplier } from "../types";
 import ListingCard from "../widgets/ListingCard";
-import { ListingCardSkeleton } from "../widgets/Skeletons";
-import { useReady } from "../lib/useReady";
 
-type Filters = {
-  q: string; cat: string; region: string;
-  priceMin?: number | ""; priceMax?: number | ""; minBatch?: number | "";
-};
-
+type Filters = { q: string; cat: string; region: string; priceMin?: number | ""; priceMax?: number | ""; minBatch?: number | ""; };
 const norm = (s:string)=> (s||"").toLowerCase().normalize("NFKD").replace(/\s+/g," ").trim();
 
 export default function Listings() {
   const suppliers: Supplier[] = useMemo(() => (Array.isArray(suppliersJson) ? suppliersJson : []).filter(Boolean) as Supplier[], []);
   const supplierById = useMemo(() => new Map(suppliers.map(s=>[s.id,s])), [suppliers]);
   const listings: Listing[]  = useMemo(() => (Array.isArray(listingsJson) ? listingsJson : []).filter(Boolean) as Listing[], []);
-  const ready = useReady(320);
 
   const categories = useMemo(()=>Array.from(new Set(listings.map(l=>l.__category).filter(Boolean) as string[])),[listings]);
   const regions    = useMemo(()=>Array.from(new Set(listings.map(l=>l.region).filter(Boolean))),[listings]);
@@ -47,7 +40,7 @@ export default function Listings() {
       <h1 className="text-xl font-semibold">Объявления</h1>
 
       {/* Фильтры */}
-      <div className="glass p-3 rounded-2xl border border-[var(--border)]">
+      <div className="glass glass-neon p-3 space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="sm:col-span-3">
             <input className="input-neon w-full" placeholder="Поиск: название, поставщик, регион…" value={f.q} onChange={e=>setF({...f, q:e.target.value})}/>
@@ -74,26 +67,20 @@ export default function Listings() {
                  onChange={e=>setF({...f, minBatch: e.target.value===""? "" : Number(e.target.value.replace(/\D/g,""))})}/>
 
           <div className="sm:col-span-3 flex items-center gap-3">
-            <button className="btn btn-muted" onClick={()=>setF({ q:"", cat:"", region:"", priceMin:"", priceMax:"", minBatch:"" })}>Сбросить</button>
+            <button className="btn" onClick={()=>setF({ q:"", cat:"", region:"", priceMin:"", priceMax:"", minBatch:"" })}>Сбросить</button>
             <div className="text-sm" style={{color:"var(--muted)"}}>Найдено: {filtered.length} из {listings.length}</div>
           </div>
         </div>
       </div>
 
       {/* Лента */}
-      {!ready ? (
-        <div className="grid grid-cols-1 gap-3 pb-24">
-          {Array.from({length:4}).map((_,i)=><ListingCardSkeleton key={i}/>)}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-3 pb-24">
-          {filtered.map(l => {
-            const s = supplierById.get(l.supplierId);
-            if(!s) return null;
-            return <ListingCard key={l.id} listing={l} supplier={s}/>;
-          })}
-        </div>
-      )}
+      <div className="grid grid-cols-1 gap-3 pb-24">
+        {filtered.map(l => {
+          const s = supplierById.get(l.supplierId);
+          if(!s) return null;
+          return <ListingCard key={l.id} listing={l} supplier={s}/>;
+        })}
+      </div>
     </div>
   );
 }
