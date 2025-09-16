@@ -19,3 +19,7 @@ apps/web/.env.local
 .DS_Store
 Thumbs.db
 .vercel
+# Backups / local dumps
+*.bak*
+apps/web/audit-*/
+tools/*.ps1
