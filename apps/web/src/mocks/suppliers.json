@@ -15,7 +15,12 @@
       "whatsapp": "+7 (968) 028-00-33",
       "tg": "https://t.me/+ZO8m6CCYsfw1MGYy"
     },
-    "gallery": ["/gallery/ikra-1.svg", "/gallery/ikra-2.svg", "/gallery/ikra-3.svg"],
+    "priceList": { "url": "/prices/rkm-price-2025-09.pdf" },
+    "gallery": [
+      "/gallery/rkm-001.webp",
+      "/gallery/rkm-002.webp",
+      "/gallery/rkm-003.webp"
+    ],
     "docs": {
       "mercury": { "status": "linked", "orgId": "RU-MOS-001" },
       "chestnyZnak": { "status": "linked", "companyId": "RU-CZ-001" }

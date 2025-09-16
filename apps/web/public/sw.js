@@ -6,7 +6,7 @@
  * - /gallery/, /logos/, SVG/PNG/JPG/WebP: stale-while-revalidate
  */
 
-const CACHE_VERSION = "rch-v1.0.0";
+const CACHE_VERSION = "rch-v1.0.1";
 const CORE_CACHE = `core-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `rt-${CACHE_VERSION}`;
 

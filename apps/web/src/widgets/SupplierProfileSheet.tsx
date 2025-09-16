@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Supplier, Listing } from "../types";
+import GalleryLightbox from "./GalleryLightbox";
 
 export default function SupplierProfileSheet({
   open,
@@ -13,8 +14,10 @@ export default function SupplierProfileSheet({
   onClose: () => void;
 }) {
   const [showContacts, setShowContacts] = useState(false);
+  const [lbIdx, setLbIdx] = useState<number | null>(null);
 
-  useEffect(() => { setShowContacts(false); }, [open, supplier?.id]);
+  useEffect(() => { setShowContacts(false); setLbIdx(null); }, [open, supplier?.id]);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -22,7 +25,6 @@ export default function SupplierProfileSheet({
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  // Лочим прокрутку фона, скроллим только шит
   useEffect(() => {
     if (!open) return;
     const prev = document.documentElement.style.overflow;
@@ -35,18 +37,18 @@ export default function SupplierProfileSheet({
   const hasCZ = docs?.chestnyZnak?.status === "linked";
   const verified = !!supplier?.verified;
 
+  // ТОЛЬКО фирменная галерея
   const gallery = useMemo(() => {
     if (!supplier) return [];
-    const base = supplier.gallery && supplier.gallery.length ? supplier.gallery : [];
-    const fromListings = listings.filter(l => l.supplierId === supplier.id).flatMap(l => l.photos || []);
-    return (base.length ? base : fromListings).slice(0, 20);
-  }, [supplier, listings]);
+    return Array.isArray(supplier.gallery) ? supplier.gallery.slice(0, 24) : [];
+  }, [supplier]);
 
+  // Последние 3 объявления (без фото)
   const last3 = useMemo(() => {
     if (!supplier) return [];
     return listings
-      .filter(l => l.supplierId === supplier.id)
-      .sort((a,b)=>(b.createdAt?+new Date(b.createdAt):0)-(a.createdAt?+new Date(a.createdAt):0))
+      .filter((l) => l.supplierId === supplier.id)
+      .sort((a,b)=> (b.createdAt?+new Date(b.createdAt):0) - (a.createdAt?+new Date(a.createdAt):0))
       .slice(0,3);
   }, [supplier, listings]);
 
@@ -54,7 +56,6 @@ export default function SupplierProfileSheet({
 
   return (
     <div className="fixed inset-0 z-[70]">
-      {/* overlay */}
       <button
         className="absolute inset-0 bg-black/50 opacity-0 transition-opacity duration-200 data-[show=true]:opacity-100"
         data-show={open}
@@ -77,7 +78,10 @@ export default function SupplierProfileSheet({
           data-show={open}
           style={{ maxHeight: "calc(100svh - 16px)", WebkitOverflowScrolling: "touch" as any }}
         >
-          <div className="overflow-y-auto overscroll-contain" style={{ maxHeight: "calc(100svh - 16px)", WebkitOverflowScrolling: "touch" as any }}>
+          <div
+            className="overflow-y-auto overscroll-contain"
+            style={{ maxHeight: "calc(100svh - 16px)", WebkitOverflowScrolling: "touch" as any }}
+          >
             {/* Шапка */}
             <header
               className="sticky top-0 z-10 p-4 border-b border-[var(--border)] backdrop-blur-sm"
@@ -85,19 +89,19 @@ export default function SupplierProfileSheet({
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  {/* LOGO 80×80 */}
                   <div
                     className="relative shrink-0 overflow-hidden rounded-[20px] border border-[var(--border)] bg-[rgba(255,255,255,.03)]"
-                    style={{ width: 80, height: 80 }}
+                    style={{ width: 96, height: 96 }}
                     aria-hidden
                   >
                     {supplier.logoUrl ? (
                       <img
-                        className="h-full w-full object-contain p-2.5"
+                        className="h-full w-full object-cover"
                         src={supplier.logoUrl}
                         alt={supplier.displayName}
                         loading="lazy"
                         decoding="async"
+                        style={{ objectPosition: "50% 50%", imageRendering: "auto" }}
                       />
                     ) : (
                       <div className="h-full w-full grid place-items-center text-sm font-semibold">
@@ -107,7 +111,6 @@ export default function SupplierProfileSheet({
                     <span className="pointer-events-none absolute inset-0 rounded-[20px] ring-1 ring-[rgba(54,209,204,.18)]" />
                   </div>
 
-                  {/* TEXT */}
                   <div className="min-w-0">
                     <h2 className="truncate text-[16px] leading-[1.25] font-semibold">{supplier.displayName}</h2>
                     <div className="truncate text-[12px] leading-[1.25]" style={{ color: "var(--muted)" }}>
@@ -124,7 +127,9 @@ export default function SupplierProfileSheet({
 
                 <div className="shrink-0 flex items-center gap-2">
                   {supplier.priceList?.url && (
-                    <a className="btn px-3 py-1.5 text-[12px]" href={supplier.priceList.url} target="_blank" rel="noreferrer">Прайс (PDF)</a>
+                    <a className="btn px-3 py-1.5 text-[12px]" href={supplier.priceList.url} target="_blank" rel="noreferrer">
+                      Прайс (PDF)
+                    </a>
                   )}
                   <button className="btn px-3 py-1.5 text-[12px]" onClick={onClose}>Закрыть</button>
                 </div>
@@ -154,28 +159,50 @@ export default function SupplierProfileSheet({
                     <Badge ok={hasCZ} label="Честный знак" />
                     <Badge ok={verified} label="Проверено" green />
                   </div>
-                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs" style={{ color: "var(--muted)" }}>
-                    {docs?.mercury?.orgId && <div>Орг. ID (Меркурий): <span className="opacity-90">{docs.mercury.orgId}</span></div>}
-                    {docs?.chestnyZnak?.companyId && <div>ID компании (ЧЗ): <span className="opacity-90">{docs.chestnyZnak.companyId}</span></div>}
-                  </div>
                 </div>
 
-                {/* Галерея 4×N */}
+                {/* Прайс-лист — отдельный блок (бросается в глаза) */}
+                {supplier.priceList?.url && (
+                  <div className="glass p-4 rounded-xl border border-[var(--border)]">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-sm font-semibold">Прайс-лист</div>
+                      <a
+                        className="btn px-3 py-1.5 text-[12px]"
+                        href={supplier.priceList.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        download
+                      >
+                        Открыть PDF
+                      </a>
+                    </div>
+                    <div className="text-xs mt-2" style={{ color: "var(--muted)" }}>
+                      Файл: {supplier.priceList.url}
+                    </div>
+                  </div>
+                )}
+
+                {/* Галерея (ТОЛЬКО supplier.gallery) */}
                 {gallery.length > 0 && (
                   <div className="glass p-4 rounded-xl border border-[var(--border)]">
                     <div className="text-sm font-semibold mb-3">Галерея</div>
                     <div className="grid grid-cols-4 gap-2">
                       {gallery.map((src, i) => (
-                        <div key={i} className="aspect-square overflow-hidden rounded-lg border border-[var(--border)] bg-[rgba(255,255,255,.03)]">
+                        <button
+                          type="button"
+                          key={i}
+                          className="aspect-square overflow-hidden rounded-lg border border-[var(--border)] bg-[rgba(255,255,255,.03)] focus:outline-none focus:ring-2 focus:ring-[rgba(54,209,204,.35)]"
+                          onClick={() => setLbIdx(i)}
+                        >
                           <img
                             src={src}
-                            alt={`${supplier.displayName} фото ${i+1}`}
+                            alt={`${supplier.displayName} фото ${i + 1}`}
                             loading="lazy"
                             decoding="async"
                             className="h-full w-full object-cover"
                             referrerPolicy="no-referrer"
                           />
-                        </div>
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -187,25 +214,30 @@ export default function SupplierProfileSheet({
                 <div className="glass p-4 rounded-xl border border-[var(--border)]">
                   <div className="flex items-center justify-between">
                     <div className="text-sm font-semibold">Контакты</div>
-                    <button className="btn px-3 py-1.5 text-[12px]" onClick={() => setShowContacts(v=>!v)}>
+                    <button className="btn px-3 py-1.5 text-[12px]" onClick={() => setShowContacts(v => !v)}>
                       {showContacts ? "Скрыть" : "Показать"}
                     </button>
                   </div>
                   {showContacts && (
                     <div className="mt-3 grid grid-cols-1 gap-2 text-sm">
-                      {supplier.contacts?.phone   && <div>Телефон: <span className="opacity-90">{supplier.contacts.phone}</span></div>}
-                      {supplier.contacts?.whatsapp&& <div>WhatsApp: <span className="opacity-90">{supplier.contacts.whatsapp}</span></div>}
-                      {supplier.contacts?.tg      && <div>Telegram: <span className="opacity-90">{supplier.contacts.tg}</span></div>}
-                      {supplier.contacts?.email   && <div>Email: <span className="opacity-90">{supplier.contacts.email}</span></div>}
-                      {supplier.contacts?.website && <div>Сайт: <a className="underline opacity-90" href={supplier.contacts.website} target="_blank" rel="noreferrer">перейти</a></div>}
+                      {supplier.contacts?.phone    && <div>Телефон: <span className="opacity-90">{supplier.contacts.phone}</span></div>}
+                      {supplier.contacts?.whatsapp && <div>WhatsApp: <span className="opacity-90">{supplier.contacts.whatsapp}</span></div>}
+                      {supplier.contacts?.tg       && <div>Telegram: <span className="opacity-90">{supplier.contacts.tg}</span></div>}
+                      {supplier.contacts?.email    && <div>Email: <span className="opacity-90">{supplier.contacts.email}</span></div>}
+                      {supplier.contacts?.website  && <div>Сайт: <a className="underline opacity-90" href={supplier.contacts.website} target="_blank" rel="noreferrer">перейти</a></div>}
                     </div>
                   )}
                 </div>
 
-                {/* Последние объявления */}
+                {/* Последние объявления — без фото, с кнопкой «Все объявления» */}
                 <div className="glass p-4 rounded-xl border border-[var(--border)]">
-                  <div className="text-sm font-semibold mb-3">Последние объявления</div>
-                  <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-semibold">Последние объявления</div>
+                    <a href={`/listings?supplier=${encodeURIComponent(supplier.id)}`} className="btn btn-muted px-3 py-1.5 text-[12px]">
+                      Все объявления
+                    </a>
+                  </div>
+                  <div className="mt-3 space-y-2">
                     {last3.length === 0 && (
                       <div className="text-xs" style={{ color: "var(--muted)" }}>Пока нет объявлений.</div>
                     )}
@@ -230,6 +262,14 @@ export default function SupplierProfileSheet({
           </div>
         </section>
       </div>
+
+      {lbIdx !== null && (
+        <GalleryLightbox
+          images={gallery}
+          startIndex={lbIdx}
+          onClose={() => setLbIdx(null)}
+        />
+      )}
     </div>
   );
 }
