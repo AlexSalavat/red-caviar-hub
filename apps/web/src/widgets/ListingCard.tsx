@@ -13,9 +13,10 @@ export default function ListingCard({ listing, supplier }: ListingCardProps) {
   const date = listing.createdAt ? new Date(listing.createdAt).toLocaleDateString("ru-RU") : "";
 
   return (
-    <article className="glass glass-neon p-3 rounded-2xl border border-[var(--border)]">
-      {/* Поставщик */}
-      <div className="flex items-center justify-between gap-3">
+    <article className="glass glass-neon rounded-2xl border border-[var(--border)] p-3 sm:p-4">
+      {/* Верх карточки: на мобиле столбиком, на ≥sm — в строку */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+        {/* Поставщик */}
         <div className="flex items-center gap-2 min-w-0">
           <div
             className="relative shrink-0 overflow-hidden rounded-[10px] border border-[var(--border)] bg-[rgba(255,255,255,.03)]"
@@ -52,16 +53,20 @@ export default function ListingCard({ listing, supplier }: ListingCardProps) {
           </div>
         </div>
 
-        {/* Цена/объём */}
-        <div className="text-right shrink-0">
+        {/* Цена/объём — уходит вниз на мобиле, справа на ≥sm */}
+        <div className="text-right sm:text-right">
           <div className="text-[12px]" style={{ color: "var(--muted)" }}>Цена</div>
           <div className="font-semibold">{tryRub(listing.pricePerKgRUB)} ₽/кг</div>
-          <div className="text-[12px]" style={{ color: "var(--muted)" }}>Объём: {tryRub(listing.batchVolumeKg)} кг</div>
+          <div className="text-[12px]" style={{ color: "var(--muted)" }}>
+            Объём: {tryRub(listing.batchVolumeKg)} кг
+          </div>
         </div>
       </div>
 
       {/* Заголовок */}
-      <div className="mt-2 text-sm font-semibold">{listing.title}</div>
+      <div className="mt-2 text-sm sm:text-[15px] font-semibold">
+        {listing.title}
+      </div>
 
       {/* Мини-галерея объявлений */}
       {photos.length > 0 && (
@@ -73,14 +78,20 @@ export default function ListingCard({ listing, supplier }: ListingCardProps) {
               className="aspect-square overflow-hidden rounded-lg border border-[var(--border)] bg-[rgba(255,255,255,.03)] focus:outline-none focus:ring-2 focus:ring-[rgba(54,209,204,.35)]"
               onClick={() => setLb({ images: photos, index: i })}
             >
-              <img src={p} alt={`Фото ${i + 1}`} className="h-full w-full object-cover" loading="lazy" decoding="async" />
+              <img
+                src={p}
+                alt={`Фото ${i + 1}`}
+                className="h-full w-full object-cover"
+                loading="lazy"
+                decoding="async"
+              />
             </button>
           ))}
         </div>
       )}
 
       {/* бейджи */}
-      <div className="mt-3 flex flex-wrap gap-1">
+      <div className="mt-3 flex flex-wrap gap-1.5">
         {listing.badges?.map((b) => <span key={b} className="pill">{b}</span>)}
         {listing.__category && <span className="pill">{listing.__category}</span>}
       </div>
