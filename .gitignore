@@ -23,3 +23,7 @@ Thumbs.db
 *.bak*
 apps/web/audit-*/
 tools/*.ps1
+
+# Archive dumps
+apps/web/audit-*.zip
+*_full_*.zip
