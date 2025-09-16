@@ -10,6 +10,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "check": "pnpm run typecheck && pnpm run lint",
+    "check:ci": "pnpm run typecheck && eslint . -f unix",
     "postinstall": "pnpm approve-builds esbuild || true",
     "vercel-build": "pnpm build"
   },
