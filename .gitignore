@@ -30,3 +30,5 @@ apps/web/audit-*.zip
 
 # Ignore all zips
 *.zip
+
+*.bak*
