@@ -16,8 +16,10 @@ export default function SupplierProfileSheet({
   const [showContacts, setShowContacts] = useState(false);
   const [lbIdx, setLbIdx] = useState<number | null>(null);
 
+  // сброс при каждом открытии/смене поставщика
   useEffect(() => { setShowContacts(false); setLbIdx(null); }, [open, supplier?.id]);
 
+  // ESC закрывает шит
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -25,6 +27,7 @@ export default function SupplierProfileSheet({
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
+  // Лочим фон — скроллится только панель
   useEffect(() => {
     if (!open) return;
     const prev = document.documentElement.style.overflow;
@@ -56,6 +59,7 @@ export default function SupplierProfileSheet({
 
   return (
     <div className="fixed inset-0 z-[70]">
+      {/* overlay */}
       <button
         className="absolute inset-0 bg-black/50 opacity-0 transition-opacity duration-200 data-[show=true]:opacity-100"
         data-show={open}
@@ -78,67 +82,84 @@ export default function SupplierProfileSheet({
           data-show={open}
           style={{ maxHeight: "calc(100svh - 16px)", WebkitOverflowScrolling: "touch" as any }}
         >
+          {/* внутренний скролл */}
           <div
             className="overflow-y-auto overscroll-contain"
             style={{ maxHeight: "calc(100svh - 16px)", WebkitOverflowScrolling: "touch" as any }}
           >
-            {/* Шапка */}
+            {/* ШАПКА: мобильная — колонками, ≥sm — в строку */}
             <header
-              className="sticky top-0 z-10 p-4 border-b border-[var(--border)] backdrop-blur-sm"
-              style={{ background: "rgba(18,24,38,.72)", paddingTop: "max(env(safe-area-inset-top), 12px)" }}
+              className="sticky top-0 z-10 border-b border-[var(--border)] backdrop-blur-sm"
+              style={{ background: "rgba(18,24,38,.72)", paddingTop: "max(env(safe-area-inset-top), 10px)" }}
             >
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div
-                    className="relative shrink-0 overflow-hidden rounded-[20px] border border-[var(--border)] bg-[rgba(255,255,255,.03)]"
-                    style={{ width: 96, height: 96 }}
-                    aria-hidden
-                  >
-                    {supplier.logoUrl ? (
-                      <img
-                        className="h-full w-full object-cover"
-                        src={supplier.logoUrl}
-                        alt={supplier.displayName}
-                        loading="lazy"
-                        decoding="async"
-                        style={{ objectPosition: "50% 50%", imageRendering: "auto" }}
-                      />
-                    ) : (
-                      <div className="h-full w-full grid place-items-center text-sm font-semibold">
-                        {initials(supplier.displayName)}
+              <div className="px-4 pt-3 pb-3 sm:py-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  {/* блок: лого + текст */}
+                  <div className="grid grid-cols-[auto,1fr] items-center gap-3 min-w-0">
+                    {/* LOGO: 84 мобайл / 96 десктоп */}
+                    <div
+                      className="relative shrink-0 overflow-hidden rounded-[18px] border border-[var(--border)] bg-[rgba(255,255,255,.03)]"
+                      style={{ width: 84, height: 84 }}
+                    >
+                      {supplier.logoUrl ? (
+                        <img
+                          className="h-full w-full object-cover"
+                          src={supplier.logoUrl}
+                          alt={supplier.displayName}
+                          loading="lazy"
+                          decoding="async"
+                          style={{ objectPosition: "50% 50%" }}
+                        />
+                      ) : (
+                        <div className="h-full w-full grid place-items-center text-sm font-semibold">
+                          {initials(supplier.displayName)}
+                        </div>
+                      )}
+                      <span className="pointer-events-none absolute inset-0 rounded-[18px] ring-1 ring-[rgba(54,209,204,.18)]" />
+                    </div>
+
+                    <div className="min-w-0">
+                      <h2 className="truncate text-[16px] sm:text-[17px] leading-[1.25] font-semibold">
+                        {supplier.displayName}
+                      </h2>
+                      <div className="truncate text-[12px] leading-[1.25] mt-0.5" style={{ color: "var(--muted)" }}>
+                        {[supplier.city, (supplier.regions || []).join(", ")].filter(Boolean).join(" • ")}
                       </div>
+
+                      {/* бейджи переносятся аккуратно */}
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {hasMercury && <span className="pill">Меркурий</span>}
+                        {hasCZ && <span className="pill">Честный знак</span>}
+                        {verified && <span className="pill pill-verified">Проверено</span>}
+                        {(supplier.categories || []).slice(0, 4).map((c) => (
+                          <span key={c} className="tag-dark">{c}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* КНОПКИ: на мобиле отдельной строкой ниже, на ≥sm справа */}
+                  <div className="flex gap-2 sm:gap-2">
+                    {supplier.priceList?.url && (
+                      <a
+                        className="btn px-3 py-1.5 text-[12px]"
+                        href={supplier.priceList.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Прайс (PDF)
+                      </a>
                     )}
-                    <span className="pointer-events-none absolute inset-0 rounded-[20px] ring-1 ring-[rgba(54,209,204,.18)]" />
+                    <button className="btn px-3 py-1.5 text-[12px]" onClick={onClose}>Закрыть</button>
                   </div>
-
-                  <div className="min-w-0">
-                    <h2 className="truncate text-[16px] leading-[1.25] font-semibold">{supplier.displayName}</h2>
-                    <div className="truncate text-[12px] leading-[1.25]" style={{ color: "var(--muted)" }}>
-                      {[supplier.city, (supplier.regions || []).join(", ")].filter(Boolean).join(" • ")}
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {hasMercury && <span className="pill">Меркурий</span>}
-                      {hasCZ && <span className="pill">Честный знак</span>}
-                      {verified && <span className="pill pill-verified">Проверено</span>}
-                      {(supplier.categories || []).slice(0, 4).map((c) => <span key={c} className="tag-dark">{c}</span>)}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="shrink-0 flex items-center gap-2">
-                  {supplier.priceList?.url && (
-                    <a className="btn px-3 py-1.5 text-[12px]" href={supplier.priceList.url} target="_blank" rel="noreferrer">
-                      Прайс (PDF)
-                    </a>
-                  )}
-                  <button className="btn px-3 py-1.5 text-[12px]" onClick={onClose}>Закрыть</button>
                 </div>
               </div>
             </header>
 
-            {/* Контент */}
+            {/* КОНТЕНТ */}
             <div className="p-4 grid grid-cols-1 lg:grid-cols-[1fr,320px] gap-4">
-              {/* левая колонка */}
+              {/* ЛЕВАЯ КОЛОНКА */}
               <div className="space-y-4">
                 {(supplier.about || supplier.warehouseAddress) && (
                   <div className="glass p-4 rounded-xl border border-[var(--border)]">
@@ -161,7 +182,7 @@ export default function SupplierProfileSheet({
                   </div>
                 </div>
 
-                {/* Прайс-лист — отдельный блок (бросается в глаза) */}
+                {/* Прайс-лист — отдельный и заметный блок */}
                 {supplier.priceList?.url && (
                   <div className="glass p-4 rounded-xl border border-[var(--border)]">
                     <div className="flex items-center justify-between gap-2">
@@ -172,6 +193,7 @@ export default function SupplierProfileSheet({
                         target="_blank"
                         rel="noreferrer"
                         download
+                        onClick={(e)=>e.stopPropagation()}
                       >
                         Открыть PDF
                       </a>
@@ -182,11 +204,11 @@ export default function SupplierProfileSheet({
                   </div>
                 )}
 
-                {/* Галерея (ТОЛЬКО supplier.gallery) */}
+                {/* Галерея: 3 колонки на мобиле, 4 на десктопе */}
                 {gallery.length > 0 && (
                   <div className="glass p-4 rounded-xl border border-[var(--border)]">
                     <div className="text-sm font-semibold mb-3">Галерея</div>
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                       {gallery.map((src, i) => (
                         <button
                           type="button"
@@ -209,7 +231,7 @@ export default function SupplierProfileSheet({
                 )}
               </div>
 
-              {/* правая колонка */}
+              {/* ПРАВАЯ КОЛОНКА */}
               <aside className="space-y-4">
                 <div className="glass p-4 rounded-xl border border-[var(--border)]">
                   <div className="flex items-center justify-between">
@@ -263,6 +285,7 @@ export default function SupplierProfileSheet({
         </section>
       </div>
 
+      {/* Лайтбокс */}
       {lbIdx !== null && (
         <GalleryLightbox
           images={gallery}
