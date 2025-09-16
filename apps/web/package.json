@@ -7,7 +7,7 @@
   "engines": { "node": ">=18" },
   "scripts": {
     "dev": "vite",
-    "build": "vite build --debug",
+    "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
