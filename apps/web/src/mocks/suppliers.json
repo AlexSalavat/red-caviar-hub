@@ -25,5 +25,31 @@
       "mercury": { "status": "linked", "orgId": "RU-MOS-001" },
       "chestnyZnak": { "status": "linked", "companyId": "RU-CZ-001" }
     }
+  },
+  {
+    "id": "more-i-sol",
+    "displayName": "Море и Соль",
+    "logoUrl": "/logos/more-i-sol.jpg",
+    "regions": ["Москва", "РФ"],
+    "city": "Москва",
+    "verified": true,
+    "rating": 4.7,
+    "categories": ["Красная икра"],
+    "about": "Реализация икры оптом и в розницу. Работаем только напрямую с производителями. Партнёр крупнейших рыбодобывающих компаний Камчатского края.",
+    "warehouseAddress": "Москва, ул. Никулинская 33 стр.1",
+    "minOrderKg": 25,
+    "contacts": {
+      "phone": "+7 985 550-57-47",
+      "tg": "https://t.me/MOREISOLMSK"
+    },
+    "gallery": [
+      "/gallery/more-i-sol-001.webp",
+      "/gallery/more-i-sol-002.webp",
+      "/gallery/more-i-sol-003.webp"
+    ],
+    "docs": {
+      "mercury": { "status": "linked" },
+      "chestnyZnak": { "status": "linked" }
+    }
   }
 ]
